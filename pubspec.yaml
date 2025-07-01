@@ -1,0 +1,13 @@
+name: code_buffer
+version: 0.0.1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  analyzer: ^7.3.0
+  collection: ^1.19.1
+  source_gen: ^2.0.0
+
+dev_dependencies:
+  test: ^1.25.15
