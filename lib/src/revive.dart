@@ -1,24 +1,46 @@
-import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/constant/value.dart';
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'code_buffer.dart';
 
-extension AnnotationToCode on Annotation {}
-
+/// Converts a [DartObject] to a code representation.
 extension RevivableToSource on DartObject {
-  /// Handles basic types and nested Revivables
+  /// Converts a [DartObject] into something that a string representation
+  /// that can be passed to [CodeBuffer.write].
+  ///
+  /// This is particularly useful to insert constant values into generated code.
+  /// For example, to insert default values. For example given the user-defined
+  /// code:
+  /// ```dart
+  /// void fn({int value = 42}) {}
+  /// ```
+  /// `value` would be a [FormalParameterElement], and the default
+  /// value could be obtained with:
+  /// ```dart
+  /// DartObject? defaultValue = element.computeConstantValue();
+  /// ```
+  /// Then, to insert the default value into generated code, you could use:
+  /// ```dart
+  /// codeBuffer.write('''
+  /// void myFunction({
+  ///   int value = ${defaultValue.toCode()},
+  /// })
+  /// ''');
+  /// ```
+  ///
+  /// **Note**:
+  /// Symbols and functions are currently not supported.
   String toCode() {
     if (isNull) return 'null';
 
-    if (variable case final variable?) {
-      if (variable.isStatic && variable is! TopLevelVariableElement) {
+    if (variable2 case final variable?) {
+      if (variable.isStatic && variable is! TopLevelVariableElement2) {
         final enclosingClass =
-            variable.thisOrAncestorOfType<InterfaceElement>();
+            variable.thisOrAncestorOfType2<InterfaceElement2>();
         if (enclosingClass == null) {
           throw StateError(
-            'Could not find the enclosing class for ${variable.name}.',
+            'Could not find the enclosing class for ${variable.name3}.',
           );
         }
 
@@ -61,7 +83,7 @@ extension RevivableToSource on DartObject {
         'Symbol values are not supported in this context: $symbol',
       );
     }
-    if (toFunctionValue() case final function?) {
+    if (toFunctionValue2() case final function?) {
       throw UnsupportedError(
         'Function values are not supported in this context: $function',
       );
@@ -80,10 +102,12 @@ extension on Revivable {
     final identifierCode = _typeCode();
     final buffer = StringBuffer(identifierCode);
 
-    if (accessor.isNotEmpty) buffer.write('.${accessor}');
+    if (accessor.isNotEmpty) buffer.write('.$accessor');
 
     buffer.write('(');
-    for (final arg in positionalArguments) buffer.write(arg.toCode());
+    for (final arg in positionalArguments) {
+      buffer.write(arg.toCode());
+    }
     for (final entry in namedArguments.entries) {
       buffer.write('${entry.key}: ${entry.value.toCode()}');
     }
@@ -93,15 +117,15 @@ extension on Revivable {
   }
 
   String _typeCode() {
-    assert(source.hasFragment);
-    final typeName = this.source.fragment;
-    final uri = this.source.toPackageUri();
+    assert(source.hasFragment, 'URIs must use URIs of format url#name');
+    final typeName = source.fragment;
+    final uri = source.toPackageUri();
 
     return '#{{$uri|$typeName}}';
   }
 }
 
-extension UriX on Uri {
+extension on Uri {
   Uri toPackageUri() {
     if (scheme == 'package') return this;
 
