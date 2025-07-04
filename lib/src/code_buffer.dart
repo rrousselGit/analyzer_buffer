@@ -1,4 +1,7 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:analyzer/dart/constant/value.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -64,7 +67,7 @@ class CodeBuffer {
   /// to the generated code.
   CodeBuffer.newLibrary({
     this.header,
-  })  : library = null,
+  })  : _libraryAdapter = null,
         _autoImport = true;
 
   /// Creates a [CodeBuffer] that generates code for a specific [library].
@@ -73,9 +76,10 @@ class CodeBuffer {
   /// Instead, it will rely on the existing imports to decide which prefix to use
   /// when writing types.
   CodeBuffer.fromLibrary(
-    LibraryElement2 this.library, {
+    LibraryElement library, {
     this.header,
-  }) : _autoImport = false;
+  })  : _libraryAdapter = _LegacyLibraryAdapter(library),
+        _autoImport = false;
 
   /// Creates a [CodeBuffer] that generates code for a specific [library].
   ///
@@ -83,12 +87,13 @@ class CodeBuffer {
   /// Instead, it will rely on the existing imports to decide which prefix to use
   /// when writing types.
   CodeBuffer.fromLibrary2(
-    LibraryElement2 this.library, {
+    LibraryElement2 library, {
     this.header,
-  }) : _autoImport = false;
+  })  : _libraryAdapter = _LibraryAdapter2(library),
+        _autoImport = false;
 
   /// The associated library, if any.
-  final LibraryElement2? library;
+  final _LibraryAdapter? _libraryAdapter;
   final StringBuffer _buffer = StringBuffer();
 
   /// Whether to automatically import missing libraries when writing types.
@@ -99,14 +104,38 @@ class CodeBuffer {
 
   void Function()? Function(String name)? _lookupArg;
 
-  Iterable<LibraryElement2> get _currentlyImportedLibraries {
-    Iterable<LibraryElement2> result = _importedLibraries;
-    if (library case final library?) {
+  Iterable<_LibraryAdapter> get _currentlyImportedLibraries {
+    Iterable<_LibraryAdapter> result = _importedLibraries;
+    if (_libraryAdapter case final library?) {
       result = result.followedBy(
-        library.fragments.expand((e) => e.importedLibraries2),
+        library.importedLibraries,
       );
     }
     return result;
+  }
+
+  final List<_LibraryAdapter> _importedLibraries = [];
+  String? _importLibrary(_LibraryAdapter library) {
+    // final library = adapter.library2;
+    // // dart:core have a null library, so we don't import it.
+    // if (library == null) return null;
+
+    if (library.uri case Uri(scheme: 'dart', path: 'core')) return null;
+
+    if (!_importedLibraries.contains(library)) _importedLibraries.add(library);
+
+    return _prefixFor(library);
+  }
+
+  String? _prefixFor(_LibraryAdapter other) {
+    final index = _importedLibraries.indexOf(other);
+    if (index >= 0) return '_i${index + 1}';
+
+    if (_libraryAdapter case final library?) {
+      return library.findPrefixFor(other.uri);
+    }
+
+    return null;
   }
 
   /// Writes the given [type] to the buffer.
@@ -122,13 +151,13 @@ class CodeBuffer {
     bool recursive = true,
   }) {
     type._visit(
-      onType: (element, name, suffix, args) {
+      onType: (library, name, suffix, args) {
         String? prefix;
-        if (element != null) {
+        if (library != null) {
           if (_autoImport) {
-            prefix = _importElement(element);
+            prefix = _importLibrary(library);
           } else {
-            prefix = _prefixFor(element.library2!);
+            prefix = _prefixFor(library);
           }
         }
 
@@ -174,66 +203,6 @@ class CodeBuffer {
       },
     );
   }
-
-  // void writeDefault(VariableElement2 element) {
-  //   final constant = element.computeConstantValue();
-  //   final type = _DartObjectTypes.fromDartObject(constant);
-  //   switch (type) {
-  //     case _Null():
-  //       return 'null';
-  //     case _Variable(value: final TopLevelVariableElement2 variable):
-  //       return _code(variable.library2.uri, variable.name3!);
-  //     case _Variable(value: VariableElement2(isStatic: true) && final variable):
-  //       final enclosingClass =
-  //           variable.thisOrAncestorOfType2<InterfaceElement2>();
-  //       if (enclosingClass == null) {
-  //         throw StateError(
-  //           'Could not find the enclosing class for ${variable.name3}.',
-  //         );
-  //       }
-
-  //       return '${enclosingClass.thisType.toCode(recursive: false)}.${variable.name3}';
-  //     case _Variable(value: VariableElement2(isStatic: false)):
-  //       // This is a local variable, which cannot be represented in code.
-  //       throw UnsupportedError(
-  //         'Local variables cannot be represented in code: ${type.value.name3}',
-  //       );
-  //     case _String():
-  //       return "'${_escapeString(type.value)}'";
-  //     case _Int():
-  //     case _Bool():
-  //     case _Double():
-  //       return type.value.toString();
-  //     case _Record():
-  //       final buffer = StringBuffer('(');
-
-  //       for (final param in type.value.positional) {
-  //         buffer.write(param.toCode());
-  //         buffer.write(', ');
-  //       }
-  //       for (final entry in type.value.named.entries) {
-  //         buffer.write('${entry.key}: ${entry.value.toCode()}, ');
-  //       }
-
-  //       buffer.write(')');
-  //       return buffer.toString();
-  //     case _List():
-  //       return '[${type.value.map((e) => e.toCode()).join(', ')}]';
-  //     case _Set():
-  //       return '{${type.value.map((e) => e.toCode()).join(', ')}}';
-  //     case _Map():
-  //       return '{${type.value.entries.map((e) => '${e.key.toCode()}: ${e.value.toCode()}').join(', ')}}';
-  //     case _Unknown():
-  //       try {
-  //         final revivable = ConstantReader(this).revive();
-  //         return revivable.toCode();
-  //       } catch (e) {
-  //         throw FormatException(
-  //           'Failed to revive constant $this. This is likely due to an unsupported constant syntax.\n$e',
-  //         );
-  //       }
-  //   }
-  // }
 
   /// Interpolates the given code, gracefully printing types and adding type prefixes if necessary.
   ///
@@ -375,39 +344,6 @@ class CodeBuffer {
     return null;
   }
 
-  final List<LibraryElement2> _importedLibraries = [];
-  String? _importElement(Element2 element) {
-    final library = element.library2;
-    // dart:core have a null library, so we don't import it.
-    if (library == null) return null;
-
-    if (library.uri case Uri(scheme: 'dart', path: 'core')) return null;
-
-    if (!_importedLibraries.contains(library)) _importedLibraries.add(library);
-
-    return _prefixFor(library);
-  }
-
-  String? _prefixFor(LibraryElement2 element) {
-    final index = _importedLibraries.indexOf(element);
-    if (index >= 0) return '_i${index + 1}';
-
-    if (library case final library?) {
-      final prefix = library.fragments
-          .expand((e) => e.prefixes)
-          .expand((e) => e.imports)
-          .where((e) {
-            return e.importedLibrary2 == element;
-          })
-          .firstOrNull
-          ?.prefix2;
-
-      return prefix?.element.name3;
-    }
-
-    return null;
-  }
-
   @override
   String toString() {
     return [
@@ -432,10 +368,17 @@ class CodeBuffer {
   }
 }
 
+extension on Element2 {
+  _LibraryAdapter2? get libraryAdapter => switch (library2) {
+        null => null,
+        final LibraryElement2 e => _LibraryAdapter2(e),
+      };
+}
+
 extension on DartType {
   void _visit({
     required void Function(
-      Element2? element,
+      _LibraryAdapter? element,
       String name,
       NullabilitySuffix suffix,
       List<DartType> args,
@@ -445,7 +388,7 @@ extension on DartType {
     final alias = this.alias;
     if (alias != null) {
       onType(
-        alias.element2,
+        alias.element2.libraryAdapter,
         alias.element2.name3!,
         nullabilitySuffix,
         alias.typeArguments,
@@ -468,7 +411,7 @@ extension on DartType {
 
     if (that is ParameterizedType) {
       onType(
-        that.element3,
+        that.element3?.libraryAdapter,
         name,
         nullabilitySuffix,
         that.typeArguments,
@@ -477,10 +420,73 @@ extension on DartType {
     }
 
     onType(
-      that.element3,
+      that.element3?.libraryAdapter,
       name,
       nullabilitySuffix,
       [],
     );
+  }
+}
+
+abstract class _LibraryAdapter<T extends _LibraryAdapter<T>> {
+  Uri get uri;
+
+  String? findPrefixFor(Uri uri);
+
+  Iterable<_LibraryAdapter<T>> get importedLibraries;
+}
+
+class _LegacyLibraryAdapter implements _LibraryAdapter<_LegacyLibraryAdapter> {
+  _LegacyLibraryAdapter(this.library);
+  final LibraryElement library;
+
+  @override
+  Uri get uri => library.source.uri;
+
+  @override
+  Iterable<_LegacyLibraryAdapter> get importedLibraries {
+    return library.importedLibraries.map(_LegacyLibraryAdapter.new);
+  }
+
+  @override
+  String? findPrefixFor(Uri uri) {
+    final prefix = library.definingCompilationUnit.libraryImportPrefixes
+        .expand((e) => e.imports)
+        .where((e) {
+          return e.importedLibrary?.source.uri == uri;
+        })
+        .firstOrNull
+        ?.prefix;
+
+    return prefix?.element.name;
+  }
+}
+
+class _LibraryAdapter2 implements _LibraryAdapter<_LibraryAdapter2> {
+  _LibraryAdapter2(this.library);
+  final LibraryElement2 library;
+
+  @override
+  Uri get uri => library.uri;
+
+  @override
+  Iterable<_LibraryAdapter2> get importedLibraries {
+    return library.fragments
+        .expand((e) => e.importedLibraries2)
+        .map(_LibraryAdapter2.new);
+  }
+
+  @override
+  String? findPrefixFor(Uri uri) {
+    final prefix = library.fragments
+        .expand((e) => e.prefixes)
+        .expand((e) => e.imports)
+        .where((e) {
+          return e.importedLibrary2?.uri == uri;
+        })
+        .firstOrNull
+        ?.prefix2;
+
+    return prefix?.element.name3;
   }
 }

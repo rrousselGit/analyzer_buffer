@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:code_buffer/code_buffer.dart';
@@ -14,7 +16,7 @@ typedef MyMap<T> = Map<T, T;
 
 MyMap<int> value() => 42;
 ''');
-        final buffer = CodeBuffer.fromLibrary(result.libraryElement2);
+        final buffer = CodeBuffer.fromLibrary2(result.libraryElement2);
 
         final valueElement =
             result.libraryElement2.getTopLevelFunction('value')!;
@@ -30,7 +32,7 @@ MyMap<int> value() => 42;
       });
       test('recursive: controls whether type arguments are written', () async {
         final result = await resolveFiles("import 'dart:async' as async;'");
-        final buffer = CodeBuffer.fromLibrary(result.libraryElement2);
+        final buffer = CodeBuffer.fromLibrary2(result.libraryElement2);
 
         final controllerElement =
             result.importedElementWithName('StreamController')!;
@@ -56,7 +58,8 @@ MyMap<int> value() => 42;
           "import 'dart:io' as io;'\n"
           "import 'package:path/path.dart';",
         );
-        final buffer = CodeBuffer.fromLibrary(result.libraryElement2);
+        final buffer = CodeBuffer.fromLibrary(result.libraryElement);
+        final buffer2 = CodeBuffer.fromLibrary2(result.libraryElement2);
 
         final controllerElement =
             result.importedElementWithName('StreamController')!;
@@ -79,13 +82,29 @@ MyMap<int> value() => 42;
         buffer.writeType(contextElement.thisType);
         buffer.write(') World');
 
+        buffer2.write('Hello(');
+        buffer2.writeType(controllerType);
+        buffer2.write(') World');
+
+        buffer2.write('Hello(');
+        buffer2.writeType(contextElement.thisType);
+        buffer2.write(') World');
+
         expect(
           buffer.toString(),
           contains('Hello(async.StreamController<io.File>) World'),
         );
-
         expect(
           buffer.toString(),
+          contains('Hello(Context) World'),
+        );
+
+        expect(
+          buffer2.toString(),
+          contains('Hello(async.StreamController<io.File>) World'),
+        );
+        expect(
+          buffer2.toString(),
           contains('Hello(Context) World'),
         );
       });
@@ -207,9 +226,9 @@ Hello _0.StreamController World'''),
           contains('Hello John from World'),
         );
       });
-      test('if created with .fromLibrary, does not add auto-import', () async {
+      test('if created with .fromLibrary2, does not add auto-import', () async {
         final result = await resolveFiles("import 'dart:async' as async;");
-        final buffer = CodeBuffer.fromLibrary(result.libraryElement2);
+        final buffer = CodeBuffer.fromLibrary2(result.libraryElement2);
 
         buffer.write('Hello #{{dart:async|StreamController}} World');
 
