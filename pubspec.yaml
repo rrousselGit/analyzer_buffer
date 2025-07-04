@@ -1,5 +1,7 @@
 name: code_buffer
 version: 0.0.1
+description: A package to help writing code-generators while supporting import prefixes and default values
+repository: https://github.com/rrousselGit/code_buffer
 
 environment:
   sdk: ^3.6.0
