@@ -1,3 +1,7 @@
+## 0.0.4
+
+fix: correctly use prefix when an import is re-exporting an element used by generated code.
+
 ## 0.0.3
 
 fix: `buffer.write` now correctly respects import prefixes if created using `AnalyzerBuffer.fromLibrary`

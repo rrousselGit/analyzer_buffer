@@ -468,7 +468,14 @@ class _LegacyLibraryAdapter implements _LibraryAdapter<_LegacyLibraryAdapter> {
     final prefix = library.definingCompilationUnit.libraryImportPrefixes
         .expand((e) => e.imports)
         .where((e) {
-          return e.importedLibrary?.source.uri == uri;
+          final importedLibrary = e.importedLibrary;
+          if (importedLibrary == null) return false;
+          if (importedLibrary.source.uri == uri) return true;
+          for (final lib in importedLibrary.exportedLibraries) {
+            if (lib.source.uri == uri) return true;
+          }
+
+          return false;
         })
         .firstOrNull
         ?.prefix;
@@ -497,7 +504,14 @@ class _LibraryAdapter2 implements _LibraryAdapter<_LibraryAdapter2> {
         .expand((e) => e.prefixes)
         .expand((e) => e.imports)
         .where((e) {
-          return e.importedLibrary2?.uri == uri;
+          final importedLibrary2 = e.importedLibrary2;
+          if (importedLibrary2 == null) return false;
+          if (importedLibrary2.uri == uri) return true;
+          for (final lib in importedLibrary2.exportedLibraries2) {
+            if (lib.uri == uri) return true;
+          }
+
+          return false;
         })
         .firstOrNull
         ?.prefix2;

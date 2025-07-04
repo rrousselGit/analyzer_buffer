@@ -189,6 +189,31 @@ Hello _0.StreamController World'''),
       });
     });
     group('write', () {
+      test('handles re-export as prefix', () async {
+        final result = await resolveFiles(
+          "import 'foo.dart' as foo;",
+          files: {'foo.dart': "export 'dart:async';"},
+        );
+        final buffer = AnalyzerBuffer.fromLibrary(result.libraryElement);
+        final buffer2 = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
+
+        buffer.write('Hello #{{dart:async|StreamController}} World');
+        buffer2.write('Hello #{{dart:async|StreamController}} World');
+
+        expect(
+          buffer.toString(),
+          matchesIgnoringPrefixes(
+            contains('Hello foo.StreamController World'),
+          ),
+        );
+        expect(
+          buffer2.toString(),
+          matchesIgnoringPrefixes(
+            contains('Hello foo.StreamController World'),
+          ),
+        );
+      });
+
       test('interpolates #{{uri|name}}', () {
         final buffer = AnalyzerBuffer.newLibrary();
 
