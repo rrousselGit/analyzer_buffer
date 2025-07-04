@@ -197,13 +197,33 @@ Hello _0.StreamController World'''),
           '#{{dart:core|int}} '
           '#{{dart:async|StreamController}} '
           '#{{package:example|Name}} '
+          '#{{package:example/foo.dart|Name2}} '
+          '#{{riverpod|Provider}} '
+          '#{{other/bar.dart|Bar}} '
+          '#{{other/baz|Baz}} '
           'World',
         );
+
+        expect(buffer.toString(), isNot(contains('dart:core')));
+        expect(buffer.toString(), contains('dart:async'));
+        expect(buffer.toString(), contains('package:example/example.dart'));
+        expect(buffer.toString(), contains('package:example/foo.dart'));
+        expect(buffer.toString(), contains('package:riverpod/riverpod.dart'));
+        expect(buffer.toString(), contains('package:other/bar.dart'));
+        expect(buffer.toString(), contains('package:other/baz.dart'));
 
         expect(
           buffer.toString(),
           matchesIgnoringPrefixes(
-            contains('Hello int _0.StreamController _0.Name World'),
+            allOf(
+              contains(' int '),
+              contains(' _0.StreamController '),
+              contains(' _0.Name '),
+              contains(' _0.Name2 '),
+              contains(' _0.Provider '),
+              contains(' _0.Bar '),
+              contains(' _0.Baz '),
+            ),
           ),
         );
       });
@@ -249,21 +269,21 @@ Hello _0.StreamController World'''),
           contains('Hello John from World'),
         );
       });
-      test('if created with .fromLibrary2, does not add auto-import', () async {
+      test(
+          'if created with .fromLibrary2, does not add auto-import but respect prefixes',
+          () async {
         final result = await resolveFiles("import 'dart:async' as async;");
         final buffer = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
 
         buffer.write('Hello #{{dart:async|StreamController}} World');
 
         expect(buffer.toString(), isNot(contains('dart:async')));
-      });
-      test('if created with .newLibrary, adds auto-imports for types', () {
-        final buffer = AnalyzerBuffer.newLibrary();
-        buffer.write('Hello #{{dart:async|StreamController}} World');
 
         expect(
           buffer.toString(),
-          matchesIgnoringPrefixes(contains("import 'dart:async' as _0;")),
+          matchesIgnoringPrefixes(
+            contains('Hello async.StreamController World'),
+          ),
         );
       });
     });

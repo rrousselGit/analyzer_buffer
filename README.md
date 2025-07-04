@@ -28,8 +28,12 @@ class MyBuilder extends GeneratorForAnnotation<AnnotationT> {
     // to reference objects defined in other files
     buffer.write('''
     class Example {
+      // Dart package imports
       final #{{dart:async|StreamController}} controller;
+      // Third-party package imports:
       final #{{package:riverpod/riverpod.dart|Provider}} provider;
+      // Simplified syntax for packages:
+      final #{{riverpod|Provider}} provider;
     }
     ''');
 

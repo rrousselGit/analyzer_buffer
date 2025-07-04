@@ -235,6 +235,12 @@ class AnalyzerBuffer {
   /// }
   /// ```
   ///
+  /// **Note**:
+  /// Some syntax sugar for package URIs are supported.
+  /// You can write:
+  /// - `#{{example|Name}}`(same as `#{{package:example/example.dart|Name}}`)
+  /// - `#{{example/foo|Name}}` (same as `#{{package:example/foo.dart|Name}}`)
+  ///
   /// [args] can optionally be provided to insert custom 'write' operations
   /// at specific places in the code. It relies by inserting `#{{name}}` in the
   /// code, and then looking up corresponding keys within [args].
@@ -305,13 +311,11 @@ class AnalyzerBuffer {
               );
             }
 
-            if (_autoImport) {
-              final prefix = _importLibraryUri(uri);
-
-              if (prefix != null) {
-                _buffer.write(prefix);
-                _buffer.write('.');
-              }
+            final prefix =
+                _autoImport ? _importLibraryUri(uri) : _prefixForUri(uri);
+            if (prefix != null) {
+              _buffer.write(prefix);
+              _buffer.write('.');
             }
             _buffer.write(type);
           case _:
@@ -345,6 +349,10 @@ class AnalyzerBuffer {
   String? _prefixForUri(Uri uri) {
     final index = _importedLibraryUris.indexOf(uri);
     if (index >= 0) return '_u${index + 1}';
+
+    if (_libraryAdapter case final library?) {
+      return library.findPrefixFor(uri);
+    }
 
     return null;
   }
