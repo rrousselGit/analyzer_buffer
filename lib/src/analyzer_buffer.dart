@@ -96,6 +96,11 @@ class AnalyzerBuffer {
   final _LibraryAdapter? _libraryAdapter;
   final StringBuffer _buffer = StringBuffer();
 
+  /// Whether any write was performed on the buffer.
+  ///
+  /// [header] is not considered a write.
+  bool get isEmpty => _buffer.isEmpty;
+
   /// Whether to automatically import missing libraries when writing types.
   final bool _autoImport;
 
@@ -346,6 +351,8 @@ class AnalyzerBuffer {
 
   @override
   String toString() {
+    if (isEmpty) return '';
+
     return [
       '// GENERATED CODE - DO NOT MODIFY BY HAND',
       if (header != null) header,

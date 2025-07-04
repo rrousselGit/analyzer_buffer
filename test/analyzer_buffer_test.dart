@@ -9,6 +9,29 @@ import 'test_utils.dart';
 
 void main() {
   group('AnalyzerBuffer', () {
+    test('handles empty', () async {
+      final result = await resolveFiles('''
+int value() => 42;
+''');
+      final type = result.libraryElement2.typeProvider.intType;
+
+      var buffer = AnalyzerBuffer.newLibrary(header: 'Foo');
+
+      expect(buffer.isEmpty, isTrue);
+      expect(buffer.toString(), '');
+      buffer.write('Hello World');
+      expect(buffer.isEmpty, isFalse);
+      expect(buffer.toString(), isNotEmpty);
+
+      buffer = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
+
+      expect(buffer.isEmpty, isTrue);
+      expect(buffer.toString(), '');
+      buffer.writeType(type);
+      expect(buffer.isEmpty, isFalse);
+      expect(buffer.toString(), isNotEmpty);
+    });
+
     group('writeType', () {
       test('preserves typedefs, if any', () async {
         final result = await resolveFiles('''
