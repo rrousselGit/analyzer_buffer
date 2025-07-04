@@ -3,7 +3,7 @@ import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:source_gen/source_gen.dart';
 
-import 'code_buffer.dart';
+import 'analyzer_buffer.dart';
 
 String _code(Uri uri, String name) {
   return '#{{$uri|$name}}';
@@ -12,7 +12,7 @@ String _code(Uri uri, String name) {
 /// Converts a [DartObject] to a code representation.
 extension RevivableToSource on DartObject {
   /// Converts a [DartObject] into something that a string representation
-  /// that can be passed to [CodeBuffer.write].
+  /// that can be passed to [AnalyzerBuffer.write].
   ///
   /// This is particularly useful to insert constant values into generated code.
   /// For example, to insert default values. For example given the user-defined

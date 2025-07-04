@@ -8,13 +8,13 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import './revive.dart';
 
-import 'code_buffer.dart';
+import 'analyzer_buffer.dart';
 
 /// Converts a [DartType] into a `#{{uri|type}}` representation.
 extension CodeFor2 on DartType {
   /// Converts a [DartType] into a `#{{uri|type}}` representation.
   ///
-  /// This string can then be used with [CodeBuffer.write] to interpolate the
+  /// This string can then be used with [AnalyzerBuffer.write] to interpolate the
   /// element's code into a generated file.
   ///
   /// If [recursive] is true (default), it will also write the type arguments
@@ -60,33 +60,33 @@ extension CodeFor2 on DartType {
 ///
 /// Alternatively, you can write code "as usual" by using the [writeType] method,
 /// combined with passing non-interpolated strings to [write].
-class CodeBuffer {
-  /// Creates a [CodeBuffer] that generates a brand new library.
+class AnalyzerBuffer {
+  /// Creates a [AnalyzerBuffer] that generates a brand new library.
   ///
-  /// When writing types, [CodeBuffer] will automatically add the necessary imports
+  /// When writing types, [AnalyzerBuffer] will automatically add the necessary imports
   /// to the generated code.
-  CodeBuffer.newLibrary({
+  AnalyzerBuffer.newLibrary({
     this.header,
   })  : _libraryAdapter = null,
         _autoImport = true;
 
-  /// Creates a [CodeBuffer] that generates code for a specific [library].
+  /// Creates a [AnalyzerBuffer] that generates code for a specific [library].
   ///
   /// This will not automatically import missing libraries.
   /// Instead, it will rely on the existing imports to decide which prefix to use
   /// when writing types.
-  CodeBuffer.fromLibrary(
+  AnalyzerBuffer.fromLibrary(
     LibraryElement library, {
     this.header,
   })  : _libraryAdapter = _LegacyLibraryAdapter(library),
         _autoImport = false;
 
-  /// Creates a [CodeBuffer] that generates code for a specific [library].
+  /// Creates a [AnalyzerBuffer] that generates code for a specific [library].
   ///
   /// This will not automatically import missing libraries.
   /// Instead, it will rely on the existing imports to decide which prefix to use
   /// when writing types.
-  CodeBuffer.fromLibrary2(
+  AnalyzerBuffer.fromLibrary2(
     LibraryElement2 library, {
     this.header,
   })  : _libraryAdapter = _LibraryAdapter2(library),
@@ -140,7 +140,7 @@ class CodeBuffer {
 
   /// Writes the given [type] to the buffer.
   ///
-  /// If the buffer was created with [CodeBuffer.newLibrary], it will automatically
+  /// If the buffer was created with [AnalyzerBuffer.newLibrary], it will automatically
   /// import the necessary libraries to write the type.
   ///
   /// [recursive] (true by default) controls whether the type arguments of the type should also

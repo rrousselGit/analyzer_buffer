@@ -1,7 +1,7 @@
-name: code_buffer
-version: 0.0.1
+name: analyzer_buffer
+version: 2.0.0
 description: A package to help writing code-generators while supporting import prefixes and default values
-repository: https://github.com/rrousselGit/code_buffer
+repository: https://github.com/rrousselGit/analyzer_buffer
 
 environment:
   sdk: ^3.6.0

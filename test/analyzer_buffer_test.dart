@@ -2,13 +2,13 @@
 
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
-import 'package:code_buffer/code_buffer.dart';
+import 'package:analyzer_buffer/analyzer_buffer.dart';
 import 'package:test/test.dart';
 
 import 'test_utils.dart';
 
 void main() {
-  group('CodeBuffer', () {
+  group('AnalyzerBuffer', () {
     group('writeType', () {
       test('preserves typedefs, if any', () async {
         final result = await resolveFiles('''
@@ -16,7 +16,7 @@ typedef MyMap<T> = Map<T, T;
 
 MyMap<int> value() => 42;
 ''');
-        final buffer = CodeBuffer.fromLibrary2(result.libraryElement2);
+        final buffer = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
 
         final valueElement =
             result.libraryElement2.getTopLevelFunction('value')!;
@@ -32,7 +32,7 @@ MyMap<int> value() => 42;
       });
       test('recursive: controls whether type arguments are written', () async {
         final result = await resolveFiles("import 'dart:async' as async;'");
-        final buffer = CodeBuffer.fromLibrary2(result.libraryElement2);
+        final buffer = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
 
         final controllerElement =
             result.importedElementWithName('StreamController')!;
@@ -58,8 +58,8 @@ MyMap<int> value() => 42;
           "import 'dart:io' as io;'\n"
           "import 'package:path/path.dart';",
         );
-        final buffer = CodeBuffer.fromLibrary(result.libraryElement);
-        final buffer2 = CodeBuffer.fromLibrary2(result.libraryElement2);
+        final buffer = AnalyzerBuffer.fromLibrary(result.libraryElement);
+        final buffer2 = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
 
         final controllerElement =
             result.importedElementWithName('StreamController')!;
@@ -110,7 +110,7 @@ MyMap<int> value() => 42;
       });
       test('if created with .newLibrary, adds auto-imports for types',
           () async {
-        final buffer = CodeBuffer.newLibrary();
+        final buffer = AnalyzerBuffer.newLibrary();
 
         final result = await resolveFiles(
           "import 'dart:async' as async;'\n"
@@ -151,7 +151,7 @@ MyMap<int> value() => 42;
     });
     group('toString', () {
       test('includes a top comment, headers, imports and writes', () {
-        final buffer = CodeBuffer.newLibrary(header: '<Header>');
+        final buffer = AnalyzerBuffer.newLibrary(header: '<Header>');
 
         buffer.write('Hello #{{dart:async|StreamController}} World');
 
@@ -167,7 +167,7 @@ Hello _0.StreamController World'''),
     });
     group('write', () {
       test('interpolates #{{uri|name}}', () {
-        final buffer = CodeBuffer.newLibrary();
+        final buffer = AnalyzerBuffer.newLibrary();
 
         buffer.write(
           'Hello '
@@ -185,7 +185,7 @@ Hello _0.StreamController World'''),
         );
       });
       test('interpolates #{{name}} with args', () {
-        final buffer = CodeBuffer.newLibrary();
+        final buffer = AnalyzerBuffer.newLibrary();
 
         buffer.write(
           'Hello #{{name}} World',
@@ -198,7 +198,7 @@ Hello _0.StreamController World'''),
         );
       });
       test('#{{name}} without a matching arg throws', () {
-        final buffer = CodeBuffer.newLibrary();
+        final buffer = AnalyzerBuffer.newLibrary();
 
         expect(
           () => buffer.write('Hello #{{name}} World'),
@@ -208,7 +208,7 @@ Hello _0.StreamController World'''),
       test(
           'args that call `write` inherit the current arguments, on top of the new ones',
           () {
-        final buffer = CodeBuffer.newLibrary();
+        final buffer = AnalyzerBuffer.newLibrary();
 
         buffer.write(
           args: {
@@ -228,14 +228,14 @@ Hello _0.StreamController World'''),
       });
       test('if created with .fromLibrary2, does not add auto-import', () async {
         final result = await resolveFiles("import 'dart:async' as async;");
-        final buffer = CodeBuffer.fromLibrary2(result.libraryElement2);
+        final buffer = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
 
         buffer.write('Hello #{{dart:async|StreamController}} World');
 
         expect(buffer.toString(), isNot(contains('dart:async')));
       });
       test('if created with .newLibrary, adds auto-imports for types', () {
-        final buffer = CodeBuffer.newLibrary();
+        final buffer = AnalyzerBuffer.newLibrary();
         buffer.write('Hello #{{dart:async|StreamController}} World');
 
         expect(

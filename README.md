@@ -1,6 +1,6 @@
-# Welcome to CodeBuffer!
+# Welcome to AnalyzerBuffer!
 
-**CodeBuffer** is a package designed for code-generator authors. It helps solving common complex tasks,
+**AnalyzerBuffer** is a package designed for code-generator authors. It helps solving common complex tasks,
 such as:
 
 - Gracefully supporting import prefixes (`import ... as prefix`)
@@ -20,8 +20,8 @@ class MyBuilder extends GeneratorForAnnotation<AnnotationT> {
     LibraryReader library,
     BuildStep buildStep,
   ) async {
-    // We create a 'CodeBuffer'
-    final buffer = CodeBuffer.fromLibrary(library.element);
+    // We create a 'AnalyzerBuffer'
+    final buffer = AnalyzerBuffer.fromLibrary(library.element);
 
     // We write some code in the buffer
     // We use #{{package:packageName/file.dart|Class}} inside the source
@@ -42,11 +42,11 @@ class MyBuilder extends GeneratorForAnnotation<AnnotationT> {
 Using this syntax, generated code will automatically use import prefixes as
 defined by the user.
 
-See [CodeBuffer](https://pub.dev/documentation/code_buffer/latest/code_buffer/CodeBuffer-class.html) for the full list of methods available.
+See [AnalyzerBuffer](https://pub.dev/documentation/analyzer_buffer/latest/analyzer_buffer/AnalyzerBuffer-class.html) for the full list of methods available.
 
 ### Dynamic content and loops
 
-`CodeBuffer.write` supports a custom String interpolation, for the sake of
+`AnalyzerBuffer.write` supports a custom String interpolation, for the sake of
 passing non-static content.
 
 The syntax is `#{{name}}` (without a package name), followed by passing
@@ -67,7 +67,7 @@ class Example {
 
 ### Writing DartTypes
 
-`CodeBuffer` offers a [writeType](https://pub.dev/documentation/code_buffer/latest/code_buffer/CodeBuffer/writeType.html) method.
+`AnalyzerBuffer` offers a [writeType](https://pub.dev/documentation/analyzer_buffer/latest/analyzer_buffer/AnalyzerBuffer/writeType.html) method.
 This method enables writing a `DartType` from `analyzer` directly into the generated code:
 
 ```dart
@@ -105,7 +105,7 @@ And generated code may want to generate copy-paste that `= 10` somewhere
 in the generated code, while preserving import prefixes but also
 supporting enums and such.
 
-To solve this, CodeBuffer offers `DartObject.toCode()`, to convert
+To solve this, AnalyzerBuffer offers `DartObject.toCode()`, to convert
 any constant value into its `#{{uri|name}}` representation.
 
 A typical usage is:

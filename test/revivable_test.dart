@@ -1,5 +1,5 @@
 import 'package:analyzer/dart/element/element2.dart';
-import 'package:code_buffer/code_buffer.dart';
+import 'package:analyzer_buffer/analyzer_buffer.dart';
 import 'package:test/test.dart';
 
 import 'test_utils.dart';
