@@ -2,9 +2,8 @@
 
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
-import '../lib/analyzer_buffer.dart';
+import 'package:analyzer_buffer/analyzer_buffer.dart';
 import 'package:test/test.dart';
-import 'package:analyzer_buffer/../test/';
 
 import 'test_utils.dart';
 

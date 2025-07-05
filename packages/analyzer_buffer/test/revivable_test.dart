@@ -1,9 +1,7 @@
 import 'package:analyzer/dart/element/element2.dart';
-import '../lib/analyzer_buffer.dart';
+import 'package:analyzer_buffer/analyzer_buffer.dart';
 import 'package:test/test.dart';
 
-import 'analyzer_buffer_test.dart'
-    as prefix;
 import 'test_utils.dart';
 
 void main() {
