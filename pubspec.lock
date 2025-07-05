@@ -10,13 +10,13 @@ packages:
     source: hosted
     version: "85.0.0"
   analyzer:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: analyzer
-      sha256: f6154230675c44a191f2e20d16eeceb4aa18b30ca732db4efaf94c6a7d43cfa6
+      sha256: "01949bf52ad33f0e0f74f881fbaac4f348c556531951d92c8d16f1262aa19ff8"
       url: "https://pub.dev"
     source: hosted
-    version: "7.5.2"
+    version: "7.5.4"
   args:
     dependency: transitive
     description:
@@ -130,7 +130,7 @@ packages:
     source: hosted
     version: "4.10.1"
   collection:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: collection
       sha256: "2f5709ae4d3d59dd8f7cd309b4e023046b57d8a6c82130785d2b0e5868084e76"
@@ -306,7 +306,7 @@ packages:
     source: hosted
     version: "2.2.0"
   path:
-    dependency: "direct dev"
+    dependency: transitive
     description:
       name: path
       sha256: "75cca69d1490965be98c73ceaea117e8a04dd21217b37b292c9ddbec0d955bc5"
@@ -370,7 +370,7 @@ packages:
     source: hosted
     version: "3.0.0"
   source_gen:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: source_gen
       sha256: "35c8150ece9e8c8d263337a265153c3329667640850b9304861faea59fc98f6b"
@@ -442,7 +442,7 @@ packages:
     source: hosted
     version: "1.2.2"
   test:
-    dependency: "direct dev"
+    dependency: transitive
     description:
       name: test
       sha256: "65e29d831719be0591f7b3b1a32a3cda258ec98c58c7b25f7b84241bc31215bb"

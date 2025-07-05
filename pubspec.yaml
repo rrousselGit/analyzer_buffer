@@ -1,0 +1,8 @@
+name: workspace
+public_to: none
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+
+workspace:
+  - packages/analyzer_buffer

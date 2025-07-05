@@ -9,7 +9,7 @@
     },
     {
       "name": "analyzer",
-      "rootUri": "file:///Users/remirousselet/.pub-cache/hosted/pub.dev/analyzer-7.5.2",
+      "rootUri": "file:///Users/remirousselet/.pub-cache/hosted/pub.dev/analyzer-7.5.4",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },
@@ -404,8 +404,14 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "analyzer_buffer",
+      "name": "workspace",
       "rootUri": "../",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "analyzer_buffer",
+      "rootUri": "../packages/analyzer_buffer",
       "packageUri": "lib/",
       "languageVersion": "3.6"
     }

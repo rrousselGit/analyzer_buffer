@@ -6,6 +6,8 @@ repository: https://github.com/rrousselGit/analyzer_buffer
 environment:
   sdk: ^3.6.0
 
+resolution: workspace
+
 dependencies:
   analyzer: ^7.3.0
   collection: ^1.19.1
