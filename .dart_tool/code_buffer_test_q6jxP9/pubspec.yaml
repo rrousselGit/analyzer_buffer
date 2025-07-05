@@ -1,7 +1,0 @@
-name: temp_test
-publish_to: none
-environment:
-  sdk: ^3.5.0
-
-dependencies:
-  path: ^1.8.0
