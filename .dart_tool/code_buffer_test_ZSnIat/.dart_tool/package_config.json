@@ -1,0 +1,22 @@
+{
+  "configVersion": 2,
+  "packages": [
+    {
+      "name": "path",
+      "rootUri": "file:///Users/remirousselet/.pub-cache/hosted/pub.dev/path-1.9.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "temp_test",
+      "rootUri": "../",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    }
+  ],
+  "generator": "pub",
+  "generatorVersion": "3.8.1",
+  "flutterRoot": "file:///Users/remirousselet/dev/flutter",
+  "flutterVersion": "3.32.1",
+  "pubCache": "file:///Users/remirousselet/.pub-cache"
+}

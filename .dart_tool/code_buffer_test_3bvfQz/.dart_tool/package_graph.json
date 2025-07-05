@@ -1,0 +1,21 @@
+{
+  "roots": [
+    "temp_test"
+  ],
+  "packages": [
+    {
+      "name": "temp_test",
+      "version": "0.0.0",
+      "dependencies": [
+        "path"
+      ],
+      "devDependencies": []
+    },
+    {
+      "name": "path",
+      "version": "1.9.1",
+      "dependencies": []
+    }
+  ],
+  "configVersion": 1
+}
