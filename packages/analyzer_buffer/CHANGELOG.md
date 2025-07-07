@@ -1,3 +1,9 @@
+## 0.0.5 - 2025-07-07
+
+breaking: `AnalyzerBuffer` constructors now take a mandatory `sourcePath` parameter.
+It is necessary for certain edge-cases around types/defaults.  
+fix: Fixes an issue where `AnalyzerBuffer` could not be applied to `test` folders.
+
 ## 0.0.4
 
 fix: correctly use prefix when an import is re-exporting an element used by generated code.
