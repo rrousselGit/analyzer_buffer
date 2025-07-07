@@ -6,9 +6,11 @@ import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
-import 'revive.dart';
+import 'package:meta/meta.dart';
+import 'package:path/path.dart' as path;
 
 import 'analyzer_buffer.dart';
+import 'revive.dart';
 
 /// Converts a [DartType] into a `#{{uri|type}}` representation.
 extension CodeFor2 on DartType {
@@ -66,6 +68,7 @@ class AnalyzerBuffer {
   /// When writing types, [AnalyzerBuffer] will automatically add the necessary imports
   /// to the generated code.
   AnalyzerBuffer.newLibrary({
+    required this.sourcePath,
     this.header,
   })  : _libraryAdapter = null,
         _autoImport = true;
@@ -77,6 +80,7 @@ class AnalyzerBuffer {
   /// when writing types.
   AnalyzerBuffer.fromLibrary(
     LibraryElement library, {
+    required this.sourcePath,
     this.header,
   })  : _libraryAdapter = _LegacyLibraryAdapter(library),
         _autoImport = false;
@@ -88,6 +92,7 @@ class AnalyzerBuffer {
   /// when writing types.
   AnalyzerBuffer.fromLibrary2(
     LibraryElement2 library, {
+    required this.sourcePath,
     this.header,
   })  : _libraryAdapter = _LibraryAdapter2(library),
         _autoImport = false;
@@ -103,6 +108,9 @@ class AnalyzerBuffer {
 
   /// Whether to automatically import missing libraries when writing types.
   final bool _autoImport;
+
+  /// The path of the file that is being generated.
+  final String sourcePath;
 
   /// A header that will be added at the top of the generated code.
   final String? header;
@@ -280,37 +288,17 @@ class AnalyzerBuffer {
         previousIndex = match.end;
 
         final matchedString = match.group(1)!;
-        switch (matchedString.split('|')) {
-          case [final argName]:
+        parseCode(
+          matchedString,
+          sourcePath: sourcePath,
+          onArg: (argName) {
             final arg = lookup(argName);
             if (arg == null) {
               throw ArgumentError('No argument found for $argName');
             }
             arg();
-
-          case [final uriStr, final type]:
-            var uri = Uri.parse(uriStr);
-            if (!uri.hasScheme) {
-              uri = uri.replace(scheme: 'package');
-            }
-            if (uri.scheme != 'dart' && uri.pathSegments.length == 1) {
-              uri = uri.replace(
-                pathSegments: [
-                  uri.pathSegments.single,
-                  '${uri.pathSegments.first}.dart',
-                ],
-              );
-            }
-            if (uri.pathSegments.length > 1 &&
-                !uri.pathSegments.last.endsWith('.dart')) {
-              uri = uri.replace(
-                pathSegments: [
-                  ...uri.pathSegments.take(uri.pathSegments.length - 1),
-                  '${uri.pathSegments.last}.dart',
-                ],
-              );
-            }
-
+          },
+          onUri: (uri, type) {
             final prefix =
                 _autoImport ? _importLibraryUri(uri) : _prefixForUri(uri);
             if (prefix != null) {
@@ -318,9 +306,8 @@ class AnalyzerBuffer {
               _buffer.write('.');
             }
             _buffer.write(type);
-          case _:
-            throw ArgumentError('Invalid argument: $matchedString');
-        }
+          },
+        );
       }
 
       _buffer.write(code.substring(previousIndex));
@@ -331,7 +318,7 @@ class AnalyzerBuffer {
 
   final List<Uri> _importedLibraryUris = [];
   String? _importLibraryUri(Uri uri) {
-    if (uri.scheme == 'dart' && uri.path == 'core') return null;
+    if (uri.isIgnoredFromImports) return null;
 
     final alreadyImportedLibrary =
         _currentlyImportedLibraries.where((e) => e.uri == uri).firstOrNull;
@@ -347,6 +334,8 @@ class AnalyzerBuffer {
   }
 
   String? _prefixForUri(Uri uri) {
+    if (uri.isIgnoredFromImports) return null;
+
     final index = _importedLibraryUris.indexOf(uri);
     if (index >= 0) return '_u${index + 1}';
 
@@ -381,6 +370,80 @@ class AnalyzerBuffer {
       _buffer,
     ].join('\n');
   }
+}
+
+extension on Uri {
+  bool get isIgnoredFromImports {
+    switch (this) {
+      // Don't import dart:core, as it is the default library.
+      case Uri(scheme: 'dart', path: 'core'):
+      // Don't import self.
+      case Uri(scheme: '', pathSegments: []):
+      case Uri(scheme: '', pathSegments: ['']):
+      case Uri(scheme: '', pathSegments: ['.']):
+      case Uri(scheme: '', pathSegments: ['./']):
+        return true;
+    }
+
+    return false;
+  }
+}
+
+@internal
+void parseCode(
+  String code, {
+  required void Function(String arg) onArg,
+  required void Function(Uri uri, String type) onUri,
+  required String sourcePath,
+}) {
+  switch (code.split('|')) {
+    case [final argName]:
+      onArg(argName);
+    case [final uriStr, final type]:
+      final uri = _normalizeCodeUri(
+        Uri.parse(uriStr),
+        sourcePath: sourcePath,
+      );
+
+      onUri(uri, type);
+    case _:
+      throw ArgumentError('Invalid argument: $code');
+  }
+}
+
+Uri _normalizeCodeUri(
+  Uri input, {
+  required String sourcePath,
+}) {
+  var uri = input;
+  if (!uri.hasScheme) uri = uri.replace(scheme: 'package');
+
+  switch (uri) {
+    case Uri(scheme: 'file' || 'dart'):
+      break;
+    case Uri(
+        scheme: 'asset',
+        pathSegments: [_ /* package name */, ...final pathSegments]
+      ):
+      final targetPath = path.joinAll(pathSegments);
+      uri = uri.replace(
+        scheme: '',
+        path: path.normalize(
+          path.relative(targetPath, from: path.dirname(sourcePath)),
+        ),
+      );
+    case Uri(scheme: 'package', pathSegments: [final segment]):
+      uri = uri.replace(pathSegments: [segment, '$segment.dart']);
+    case Uri(scheme: 'package', pathSegments: [...final rest, final last])
+        when !last.endsWith('.dart'):
+      uri = uri.replace(pathSegments: [...rest, '$last.dart']);
+    case Uri(scheme: 'package'):
+      break;
+    case _:
+      throw UnsupportedError('Unsupported URI: $uri');
+  }
+
+  return uri;
 }
 
 extension on Element2 {

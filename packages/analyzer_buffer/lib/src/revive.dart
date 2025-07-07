@@ -40,7 +40,9 @@ extension RevivableToSource on DartObject {
   ///
   /// **Note**:
   /// Symbols and functions are currently not supported.
-  String toCode({bool addLeadingConst = true}) {
+  String toCode({
+    bool addLeadingConst = true,
+  }) {
     final maybeConst = addLeadingConst ? 'const ' : '';
 
     final type = _DartObjectTypes.fromDartObject(this);
@@ -81,7 +83,8 @@ extension RevivableToSource on DartObject {
         }
         for (final entry in type.value.named.entries) {
           buffer.write(
-              '${entry.key}: ${entry.value.toCode(addLeadingConst: false)}, ');
+            '${entry.key}: ${entry.value.toCode(addLeadingConst: false)}, ',
+          );
         }
 
         buffer.write(')');
@@ -91,7 +94,10 @@ extension RevivableToSource on DartObject {
       case _Set():
         return '$maybeConst{${type.value.map((e) => e.toCode(addLeadingConst: false)).join(', ')}}';
       case _Map():
-        return '$maybeConst{${type.value.entries.map((e) => '${e.key.toCode(addLeadingConst: false)}: ${e.value.toCode(addLeadingConst: false)}').join(', ')}}';
+        return '$maybeConst{${type.value.entries.map(
+              (e) => '${e.key.toCode(addLeadingConst: false)}: '
+                  '${e.value.toCode(addLeadingConst: false)}',
+            ).join(', ')}}';
       case _Unknown():
         try {
           final revivable = ConstantReader(this).revive();
@@ -261,28 +267,8 @@ extension on Revivable {
 
   String _typeCode() {
     final typeName = source.hasFragment ? source.fragment : accessor;
-    final uri = source.normalize();
+    final uri = source.removeFragment();
 
     return '#{{$uri|$typeName}}';
-  }
-}
-
-extension on Uri {
-  Uri normalize() {
-    if (scheme == 'package') return this;
-
-    if (scheme == 'asset') {
-      if (pathSegments case [final packageName, 'lib', ...final res]) {
-        return Uri(scheme: 'package', pathSegments: [packageName, ...res]);
-      }
-    }
-
-    if (scheme == 'file') return Uri(path: path);
-
-    throw ArgumentError.value(
-      toString(),
-      'uri',
-      'Cannot convert to package URI',
-    );
   }
 }

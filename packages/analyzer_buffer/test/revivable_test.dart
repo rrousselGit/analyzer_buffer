@@ -36,13 +36,13 @@ void fn({
       );
       expect(
         objectWithoutTypeArgs.computeConstantValue()!.toCode(),
-        'const #{{package:temp_test/main.dart|Holder}}([1, 2], named: [3, 4])',
+        'const #{{asset:temp_test/lib/main.dart|Holder}}([1, 2], named: [3, 4])',
       );
       expect(
         objectWithoutTypeArgs
             .computeConstantValue()!
             .toCode(addLeadingConst: false),
-        '#{{package:temp_test/main.dart|Holder}}([1, 2], named: [3, 4])',
+        '#{{asset:temp_test/lib/main.dart|Holder}}([1, 2], named: [3, 4])',
       );
       expect(
         listLiteral.computeConstantValue()!.toCode(),
@@ -173,13 +173,13 @@ class Holder<T> {
       );
       expect(
         objectWithoutTypeArgs.computeConstantValue()!.toCode(),
-        "const #{{package:temp_test/main.dart|Holder}}.named(1, 2, named: 'named', named2: 'named2')",
+        "const #{{asset:temp_test/lib/main.dart|Holder}}.named(1, 2, named: 'named', named2: 'named2')",
       );
       expect(
         objectWithoutTypeArgs
             .computeConstantValue()!
             .toCode(addLeadingConst: false),
-        "#{{package:temp_test/main.dart|Holder}}.named(1, 2, named: 'named', named2: 'named2')",
+        "#{{asset:temp_test/lib/main.dart|Holder}}.named(1, 2, named: 'named', named2: 'named2')",
       );
       expect(
         () => symbolLiteral.computeConstantValue()!.toCode(),
@@ -187,7 +187,7 @@ class Holder<T> {
       );
       expect(
         function.computeConstantValue()!.toCode(),
-        '#{{package:temp_test/main.dart|function}}',
+        '#{{asset:temp_test/lib/main.dart|function}}',
       );
       expect(
         topLevelVar.computeConstantValue()!.toCode(),

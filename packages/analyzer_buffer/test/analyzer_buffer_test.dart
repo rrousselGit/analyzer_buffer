@@ -15,7 +15,10 @@ int value() => 42;
 ''');
       final type = result.libraryElement2.typeProvider.intType;
 
-      var buffer = AnalyzerBuffer.newLibrary(header: 'Foo');
+      var buffer = AnalyzerBuffer.newLibrary(
+        header: 'Foo',
+        sourcePath: result.libraryElement2.uri.path,
+      );
 
       expect(buffer.isEmpty, isTrue);
       expect(buffer.toString(), '');
@@ -23,7 +26,10 @@ int value() => 42;
       expect(buffer.isEmpty, isFalse);
       expect(buffer.toString(), isNotEmpty);
 
-      buffer = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
+      buffer = AnalyzerBuffer.fromLibrary2(
+        result.libraryElement2,
+        sourcePath: result.libraryElement2.uri.path,
+      );
 
       expect(buffer.isEmpty, isTrue);
       expect(buffer.toString(), '');
@@ -39,7 +45,10 @@ typedef MyMap<T> = Map<T, T;
 
 MyMap<int> value() => 42;
 ''');
-        final buffer = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
+        final buffer = AnalyzerBuffer.fromLibrary2(
+          result.libraryElement2,
+          sourcePath: result.libraryElement2.uri.path,
+        );
 
         final valueElement =
             result.libraryElement2.getTopLevelFunction('value')!;
@@ -55,7 +64,10 @@ MyMap<int> value() => 42;
       });
       test('recursive: controls whether type arguments are written', () async {
         final result = await resolveFiles("import 'dart:async' as async;'");
-        final buffer = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
+        final buffer = AnalyzerBuffer.fromLibrary2(
+          result.libraryElement2,
+          sourcePath: result.libraryElement2.uri.path,
+        );
 
         final controllerElement =
             result.importedElementWithName('StreamController')!;
@@ -81,8 +93,14 @@ MyMap<int> value() => 42;
           "import 'dart:io' as io;'\n"
           "import 'package:path/path.dart';",
         );
-        final buffer = AnalyzerBuffer.fromLibrary(result.libraryElement);
-        final buffer2 = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
+        final buffer = AnalyzerBuffer.fromLibrary(
+          result.libraryElement,
+          sourcePath: result.libraryElement2.uri.path,
+        );
+        final buffer2 = AnalyzerBuffer.fromLibrary2(
+          result.libraryElement2,
+          sourcePath: result.libraryElement2.uri.path,
+        );
 
         final controllerElement =
             result.importedElementWithName('StreamController')!;
@@ -133,7 +151,7 @@ MyMap<int> value() => 42;
       });
       test('if created with .newLibrary, adds auto-imports for types',
           () async {
-        final buffer = AnalyzerBuffer.newLibrary();
+        final buffer = AnalyzerBuffer.newLibrary(sourcePath: '');
 
         final result = await resolveFiles(
           "import 'dart:async' as async;'\n"
@@ -174,7 +192,10 @@ MyMap<int> value() => 42;
     });
     group('toString', () {
       test('includes a top comment, headers, imports and writes', () {
-        final buffer = AnalyzerBuffer.newLibrary(header: '<Header>');
+        final buffer = AnalyzerBuffer.newLibrary(
+          header: '<Header>',
+          sourcePath: '',
+        );
 
         buffer.write('Hello #{{dart:async|StreamController}} World');
 
@@ -194,8 +215,14 @@ Hello _0.StreamController World'''),
           "import 'foo.dart' as foo;",
           files: {'foo.dart': "export 'dart:async';"},
         );
-        final buffer = AnalyzerBuffer.fromLibrary(result.libraryElement);
-        final buffer2 = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
+        final buffer = AnalyzerBuffer.fromLibrary(
+          result.libraryElement,
+          sourcePath: result.libraryElement2.uri.path,
+        );
+        final buffer2 = AnalyzerBuffer.fromLibrary2(
+          result.libraryElement2,
+          sourcePath: result.libraryElement2.uri.path,
+        );
 
         buffer.write('Hello #{{dart:async|StreamController}} World');
         buffer2.write('Hello #{{dart:async|StreamController}} World');
@@ -215,8 +242,10 @@ Hello _0.StreamController World'''),
       });
 
       test('interpolates #{{uri|name}}', () {
-        final buffer = AnalyzerBuffer.newLibrary();
         final file = tempDir().file('test', 'main.dart');
+        final buffer = AnalyzerBuffer.newLibrary(
+          sourcePath: file.path,
+        );
 
         buffer.write(
           'Hello '
@@ -257,7 +286,7 @@ Hello _0.StreamController World'''),
         );
       });
       test('interpolates #{{name}} with args', () {
-        final buffer = AnalyzerBuffer.newLibrary();
+        final buffer = AnalyzerBuffer.newLibrary(sourcePath: '');
 
         buffer.write(
           'Hello #{{name}} World',
@@ -270,7 +299,7 @@ Hello _0.StreamController World'''),
         );
       });
       test('#{{name}} without a matching arg throws', () {
-        final buffer = AnalyzerBuffer.newLibrary();
+        final buffer = AnalyzerBuffer.newLibrary(sourcePath: '');
 
         expect(
           () => buffer.write('Hello #{{name}} World'),
@@ -280,7 +309,7 @@ Hello _0.StreamController World'''),
       test(
           'args that call `write` inherit the current arguments, on top of the new ones',
           () {
-        final buffer = AnalyzerBuffer.newLibrary();
+        final buffer = AnalyzerBuffer.newLibrary(sourcePath: '');
 
         buffer.write(
           args: {
@@ -302,7 +331,10 @@ Hello _0.StreamController World'''),
           'if created with .fromLibrary2, does not add auto-import but respect prefixes',
           () async {
         final result = await resolveFiles("import 'dart:async' as async;");
-        final buffer = AnalyzerBuffer.fromLibrary2(result.libraryElement2);
+        final buffer = AnalyzerBuffer.fromLibrary2(
+          result.libraryElement2,
+          sourcePath: result.libraryElement2.uri.path,
+        );
 
         buffer.write('Hello #{{dart:async|StreamController}} World');
 

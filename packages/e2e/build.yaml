@@ -1,0 +1,40 @@
+targets:
+  $default:
+    builders:
+      e2e:
+        enabled: true
+        generate_for:
+          exclude:
+            - example
+            - test/source_gen_src.dart
+          include:
+            - lib/e2e/*
+            - lib/e2e/**/*
+            - test/*
+            - test/**/*
+      e2e|e2e2:
+        enabled: true
+        generate_for:
+          exclude:
+            - example
+            - test/source_gen_src.dart
+          include:
+            - lib/e2e/*
+            - lib/e2e/**/*
+            - test/*
+            - test/**/*
+
+builders:
+  e2e:
+    import: "package:e2e/builder.dart"
+    builder_factories: ["e2e"]
+    build_extensions: { ".dart": [".e2e.g.part"] }
+    auto_apply: dependents
+    build_to: cache
+    applies_builders: ["source_gen|combining_builder"]
+  e2e|e2e2:
+    import: "package:e2e/builder.dart"
+    builder_factories: ["e2e2"]
+    build_extensions: { ".dart": [".e2e2.dart"] }
+    auto_apply: dependents
+    build_to: source
