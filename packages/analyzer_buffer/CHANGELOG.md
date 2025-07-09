@@ -1,4 +1,4 @@
-## Unreleased patch
+## 0.0.6 - 2025-07-09
 
 fix: `buffer.writeType` no-longer imports the same package multiple times.
 
