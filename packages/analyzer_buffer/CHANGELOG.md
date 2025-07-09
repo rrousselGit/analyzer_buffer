@@ -1,3 +1,7 @@
+## Unreleased patch
+
+fix: `buffer.writeType` no-longer imports the same package multiple times.
+
 ## 0.0.5 - 2025-07-07
 
 breaking: `AnalyzerBuffer` constructors now take a mandatory `sourcePath` parameter.

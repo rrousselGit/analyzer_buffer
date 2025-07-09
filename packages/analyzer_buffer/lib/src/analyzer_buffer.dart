@@ -506,15 +506,29 @@ extension on DartType {
   }
 }
 
-abstract class _LibraryAdapter<T extends _LibraryAdapter<T>> {
+@immutable
+abstract base class _LibraryAdapter<T extends _LibraryAdapter<T>> {
   Uri get uri;
 
   String? findPrefixFor(Uri uri);
 
   Iterable<_LibraryAdapter<T>> get importedLibraries;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _LibraryAdapter && other.uri == uri;
+
+  @override
+  int get hashCode => uri.hashCode;
+
+  @override
+  String toString() {
+    return 'LibraryAdapter(uri: $uri, importedLibraries: ${importedLibraries.toList()})';
+  }
 }
 
-class _LegacyLibraryAdapter implements _LibraryAdapter<_LegacyLibraryAdapter> {
+final class _LegacyLibraryAdapter
+    extends _LibraryAdapter<_LegacyLibraryAdapter> {
   _LegacyLibraryAdapter(this.library);
   final LibraryElement library;
 
@@ -547,7 +561,7 @@ class _LegacyLibraryAdapter implements _LibraryAdapter<_LegacyLibraryAdapter> {
   }
 }
 
-class _LibraryAdapter2 implements _LibraryAdapter<_LibraryAdapter2> {
+final class _LibraryAdapter2 extends _LibraryAdapter<_LibraryAdapter2> {
   _LibraryAdapter2(this.library);
   final LibraryElement2 library;
 

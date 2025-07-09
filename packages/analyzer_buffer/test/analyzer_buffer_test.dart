@@ -169,22 +169,27 @@ MyMap<int> value() => 42;
           typeArguments: [fileElement.thisType],
           nullabilitySuffix: NullabilitySuffix.none,
         );
+        final controllerType2 = controllerElement.instantiate(
+          typeArguments: [result.typeProvider.voidType],
+          nullabilitySuffix: NullabilitySuffix.none,
+        );
 
         buffer.writeType(controllerType);
+        buffer.writeType(controllerType2);
 
         expect(
           buffer.toString(),
-          matchesIgnoringPrefixes(contains("import 'dart:async' as _0;")),
+          matchesIgnoringPrefixes(strContainsOnce("import 'dart:async' as _0;")),
         );
         expect(
           buffer.toString(),
-          matchesIgnoringPrefixes(contains("import 'dart:io' as _0;")),
+          matchesIgnoringPrefixes(strContainsOnce("import 'dart:io' as _0;")),
         );
         expect(
           buffer.toString(),
           isNot(
             matchesIgnoringPrefixes(
-              contains("import 'package:path/path.dart' as _0;"),
+              strContainsOnce("import 'package:path/path.dart' as _0;"),
             ),
           ),
         );
@@ -251,6 +256,7 @@ Hello _0.StreamController World'''),
           'Hello '
           '#{{dart:core|int}} '
           '#{{dart:async|StreamController}} '
+          '#{{dart:async|FutureOr}} '
           '#{{package:example|Name}} '
           '#{{package:example/foo.dart|Name2}} '
           '#{{riverpod|Provider}} '
@@ -261,13 +267,22 @@ Hello _0.StreamController World'''),
         );
 
         expect(buffer.toString(), isNot(contains('dart:core')));
-        expect(buffer.toString(), contains('dart:async'));
-        expect(buffer.toString(), contains('package:example/example.dart'));
-        expect(buffer.toString(), contains('package:example/foo.dart'));
-        expect(buffer.toString(), contains('package:riverpod/riverpod.dart'));
-        expect(buffer.toString(), contains('package:other/bar.dart'));
-        expect(buffer.toString(), contains('package:other/baz.dart'));
-        expect(buffer.toString(), contains("import 'file://${file.path}'"));
+        expect(buffer.toString(), strContainsOnce('dart:async'));
+        expect(
+          buffer.toString(),
+          strContainsOnce('package:example/example.dart'),
+        );
+        expect(buffer.toString(), strContainsOnce('package:example/foo.dart'));
+        expect(
+          buffer.toString(),
+          strContainsOnce('package:riverpod/riverpod.dart'),
+        );
+        expect(buffer.toString(), strContainsOnce('package:other/bar.dart'));
+        expect(buffer.toString(), strContainsOnce('package:other/baz.dart'));
+        expect(
+          buffer.toString(),
+          strContainsOnce("import 'file://${file.path}'"),
+        );
 
         expect(
           buffer.toString(),
@@ -378,4 +393,17 @@ Hello _0.StreamController World'''),
       );
     });
   });
+}
+
+Matcher strContainsOnce(String substring) {
+  return predicate<String>(
+    (value) {
+      final firstMatchIndex = value.indexOf(substring);
+      if (firstMatchIndex == -1) return false;
+
+      final lastMatchIndex = value.lastIndexOf(substring);
+      return firstMatchIndex == lastMatchIndex;
+    },
+    'contains "$substring" exactly once',
+  );
 }
