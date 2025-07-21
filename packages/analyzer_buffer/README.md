@@ -21,7 +21,7 @@ class MyBuilder extends GeneratorForAnnotation<AnnotationT> {
     BuildStep buildStep,
   ) async {
     // We create a 'AnalyzerBuffer'
-    final buffer = AnalyzerBuffer.fromLibrary(library.element);
+    final buffer = AnalyzerBuffer.part(library.element);
 
     // We write some code in the buffer
     // We use #{{package:packageName/file.dart|Class}} inside the source

@@ -27,14 +27,14 @@ targets:
 builders:
   e2e:
     import: "package:e2e/builder.dart"
-    builder_factories: ["e2e"]
+    builder_factories: ["partBuilder"]
     build_extensions: { ".dart": [".e2e.g.part"] }
     auto_apply: dependents
     build_to: cache
     applies_builders: ["source_gen|combining_builder"]
   e2e|e2e2:
     import: "package:e2e/builder.dart"
-    builder_factories: ["e2e2"]
-    build_extensions: { ".dart": [".e2e2.dart"] }
+    builder_factories: ["libBuilder"]
+    build_extensions: { ".dart": [".e2e.dart"] }
     auto_apply: dependents
     build_to: source

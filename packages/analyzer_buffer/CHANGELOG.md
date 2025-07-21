@@ -1,3 +1,8 @@
+## Unreleased minor
+
+- Removed `fromLibrary` in favour of `part`/`part2`.
+- Fixed various issues with prefixes
+
 ## 0.0.7 - 2025-07-09
 
 chore: Downgraded `meta`
