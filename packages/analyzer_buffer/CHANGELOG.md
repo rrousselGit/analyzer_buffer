@@ -1,3 +1,7 @@
+## Unreleased 0.1.3
+
+- Fix a stackoverflow when using cyclic import/export
+
 ## 0.1.2 - 2025-07-21
 
 - Fixed auto-import incorrectly using the same prefix for all added imports.

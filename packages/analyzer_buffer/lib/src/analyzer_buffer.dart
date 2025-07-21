@@ -70,20 +70,20 @@ abstract class _Scope {
     Set<_NormalizedUri>? visitedImports,
   }) {
     visitedImports ??= {};
-    if (visitedImports.contains(uri)) return false;
+    if (!visitedImports.add(uri)) return false;
 
-    visitedImports.add(uri);
-
-    if (show.isNotEmpty && !show.contains(symbol)) {
-      return false;
-    }
-    if (hide.isNotEmpty && hide.contains(symbol)) {
-      return false;
-    }
+    if (show.isNotEmpty && !show.contains(symbol)) return false;
+    if (hide.isNotEmpty && hide.contains(symbol)) return false;
 
     // We assume that the symbol is present if the URI matches
     if (targetUri == uri) return true;
-    if (exports.any((e) => e.hasAccessTo(targetUri, symbol))) {
+    if (exports.any(
+      (e) => e.hasAccessTo(
+        targetUri,
+        symbol,
+        visitedImports: visitedImports,
+      ),
+    )) {
       return true;
     }
 
