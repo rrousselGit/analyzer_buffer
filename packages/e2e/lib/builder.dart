@@ -2,7 +2,7 @@
 
 import 'dart:async';
 
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer_buffer/analyzer_buffer.dart';
 import 'package:build/build.dart';
 import 'package:path/path.dart' as path;
@@ -21,12 +21,12 @@ class E2EPart extends GeneratorForAnnotation<E2E> {
 
   @override
   Future<String> generateForAnnotatedElement(
-    Element element,
+    Element2 element,
     ConstantReader annotation,
     BuildStep buildStep,
   ) async {
-    final buffer = AnalyzerBuffer.part(
-      element.library!,
+    final buffer = AnalyzerBuffer.part2(
+      element.library2!,
       header: '// ignore_for_file: type=lint, type=warning',
     );
 
@@ -70,14 +70,14 @@ class E2ELibrary extends Generator {
   }
 }
 
-void _handle(Element element, AnalyzerBuffer buffer) {
+void _handle(Element2 element, AnalyzerBuffer buffer) {
   switch (element) {
-    case FunctionElement():
+    case TopLevelFunctionElement():
       buffer.writeType(element.returnType);
-      buffer.write(' ${element.name}E2e([');
-      for (final parameter in element.parameters) {
+      buffer.write(' ${element.name3}E2e([');
+      for (final parameter in element.formalParameters) {
         buffer.write(
-          '${parameter.type.toCode()} ${parameter.name}',
+          '${parameter.type.toCode()} ${parameter.name3}',
         );
         if (parameter.hasDefaultValue) {
           buffer.write(' = ${parameter.computeConstantValue()!.toCode()}');

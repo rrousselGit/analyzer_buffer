@@ -1,3 +1,7 @@
+## 0.1.1 - 2025-07-21
+
+Upgrade dependencies
+
 ## 0.1.0 - 2025-07-21
 
 - Removed `fromLibrary` in favour of `part`/`part2`.
