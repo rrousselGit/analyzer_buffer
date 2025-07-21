@@ -1,0 +1,3 @@
+class F {
+  const F();
+}
