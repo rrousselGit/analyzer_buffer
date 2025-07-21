@@ -1,3 +1,7 @@
+## Unreleased patch
+
+- Fixed auto-import incorrectly using the same prefix for all added imports.
+
 ## 0.1.1 - 2025-07-21
 
 Upgrade dependencies

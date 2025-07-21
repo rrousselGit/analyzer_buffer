@@ -100,15 +100,28 @@ Future<void> runProcess(
   }
 }
 
+/// Normalizes import prefixes based on order of appearance in the file.
+/// All prefixes become _0, _1, _2, etc.
+///
+/// If two prefix have the same name, their index is the same.
 Matcher matchesIgnoringPrefixes(Object expected) {
   final matcher = expected is Matcher ? expected : equals(expected);
 
   return predicate<String>(
     (actual) {
-      return matcher.matches(
-        actual.replaceAll(RegExp('_.[0-9]+'), '_0'),
-        {},
-      );
+      final prefixRegex = RegExp('_.[0-9]+');
+      final allPrefixes = <String, String>{};
+
+      actual = actual.replaceAllMapped(prefixRegex, (match) {
+        final prefix = allPrefixes.putIfAbsent(
+          match.group(0)!,
+          () => '_${allPrefixes.length}',
+        );
+
+        return prefix;
+      });
+
+      return matcher.matches(actual, {});
     },
     'Matches matcher',
   );

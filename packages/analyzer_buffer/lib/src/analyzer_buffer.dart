@@ -181,7 +181,7 @@ class _TargetNamespace {
     final import = findSymbol(uri, symbol);
     if (import != null) return import;
 
-    final prefix = '_i${imports.length + 1}';
+    final prefix = '_i${syntheticImports.length + 1}';
     final newImport = _ImportScope(
       uri: uri,
       prefix: prefix,

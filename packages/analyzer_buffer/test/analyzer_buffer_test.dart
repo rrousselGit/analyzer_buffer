@@ -187,13 +187,13 @@ part 'foo.g.dart';
         );
         expect(
           buffer.toString(),
-          matchesIgnoringPrefixes(strContainsOnce("import 'dart:io' as _0;")),
+          matchesIgnoringPrefixes(strContainsOnce("import 'dart:io' as _1;")),
         );
         expect(
           buffer.toString(),
           isNot(
             matchesIgnoringPrefixes(
-              strContainsOnce("import 'package:path/path.dart' as _0;"),
+              strContainsOnce("import 'package:path/path.dart' as _2;"),
             ),
           ),
         );
@@ -291,12 +291,12 @@ Hello _0.StreamController World'''),
             allOf([
               contains(' int '),
               contains(' _0.StreamController '),
-              contains(' _0.Name '),
-              contains(' _0.Name2 '),
-              contains(' _0.Provider '),
-              contains(' _0.Bar '),
-              contains(' _0.Baz '),
-              contains(' _0.File '),
+              contains(' _1.Name '),
+              contains(' _2.Name2 '),
+              contains(' _3.Provider '),
+              contains(' _4.Bar '),
+              contains(' _5.Baz '),
+              contains(' _6.File '),
             ]),
           ),
         );
