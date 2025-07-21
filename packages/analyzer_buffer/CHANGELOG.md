@@ -1,4 +1,4 @@
-## Unreleased patch
+## 0.1.2 - 2025-07-21
 
 - Fixed auto-import incorrectly using the same prefix for all added imports.
 
