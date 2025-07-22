@@ -1,3 +1,7 @@
+## Unreleased 0.1.4
+
+- Fix `writeType` with dynamic/invalid types.
+
 ## 0.1.3 - 2025-07-21
 
 - Fix a stackoverflow when using cyclic import/export

@@ -759,6 +759,7 @@ extension on DartType {
       VoidType() => 'void',
       DynamicType() => 'dynamic',
       NeverType() => 'Never',
+      InvalidType() => 'InvalidType',
       _ => that.element3!.name3!,
     };
 

@@ -43,7 +43,7 @@ int value() => 42;
         final result = await resolveFiles('''
 part 'foo.g.dart';
 
-typedef MyMap<T> = Map<T, T;
+typedef MyMap<T> = Map<T, T>;
 
 MyMap<int> value() => 42;
 ''');
@@ -62,11 +62,39 @@ MyMap<int> value() => 42;
           contains('Hello(MyMap<int>) World'),
         );
       });
-      test('recursive: controls whether type arguments are written', () async {
-        final result = await resolveFiles("""
+      test('supports dynamic/invalid types', () async {
+        final result = await resolveFiles('''
 part 'foo.g.dart';
 
-import 'dart:async' as async;'
+dynamic fn() {}
+Invalid fn2() {}
+''');
+
+        final buffer = AnalyzerBuffer.part2(result.libraryElement2);
+
+        final fnElement = result.libraryElement2.getTopLevelFunction('fn')!;
+        final fn2Element = result.libraryElement2.getTopLevelFunction('fn2')!;
+
+        buffer.write('Hello(');
+        buffer.writeType(fnElement.returnType);
+        buffer.write(') World');
+
+        buffer.write('Hello(');
+        buffer.writeType(fn2Element.returnType);
+        buffer.write(') World');
+
+        expect(
+          buffer.toString(),
+          contains('Hello(dynamic) World'),
+        );
+        expect(
+          buffer.toString(),
+          contains('Hello(InvalidType) World'),
+        );
+      });
+      test('recursive: controls whether type arguments are written', () async {
+        final result = await resolveFiles("""
+import 'dart:async' as async;
 
 part 'foo.g.dart';
 """);
@@ -92,8 +120,8 @@ part 'foo.g.dart';
       });
       test('respects import prefixes', () async {
         final result = await resolveFiles(
-          "import 'dart:async' as async;'\n"
-          "import 'dart:io' as io;'\n"
+          "import 'dart:async' as async;\n"
+          "import 'dart:io' as io;\n"
           "import 'package:path/path.dart';\n"
           "part 'foo.g.dart';\n",
         );
@@ -155,9 +183,9 @@ part 'foo.g.dart';
         );
 
         final result = await resolveFiles(
-          "import 'dart:async' as async;'\n"
-          "import 'dart:io' as io;'\n"
-          "import 'package:path/path.dart;\n"
+          "import 'dart:async' as async;\n"
+          "import 'dart:io' as io;\n"
+          "import 'package:path/path.dart';\n"
           "part 'foo.g.dart';\n",
         );
 
@@ -291,6 +319,7 @@ Hello _0.StreamController World'''),
             allOf([
               contains(' int '),
               contains(' _0.StreamController '),
+              contains(' _0.FutureOr '),
               contains(' _1.Name '),
               contains(' _2.Name2 '),
               contains(' _3.Provider '),

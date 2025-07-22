@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/error/error.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
@@ -66,6 +67,17 @@ dependencies:
 
   final result = await resolveFile2(path: main.absolute.path);
   result as ResolvedUnitResult;
+
+  final syntaxErrors = result.errors.where(
+    (e) => e.errorCode.type == ErrorType.SYNTACTIC_ERROR,
+  );
+
+  if (syntaxErrors.isNotEmpty) {
+    throw Exception(
+      'Syntax errors found in the code:\n'
+      '${syntaxErrors.map((e) => e.toString()).join('\n')}',
+    );
+  }
 
   return result;
 }
