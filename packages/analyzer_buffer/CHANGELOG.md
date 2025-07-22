@@ -1,4 +1,4 @@
-## Unreleased 0.1.4
+## 0.1.4 - 2025-07-22
 
 - Fix `writeType` with dynamic/invalid types.
 
