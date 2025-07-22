@@ -407,8 +407,13 @@ Hello _0.StreamController World'''),
   group('CodeFor', () {
     test('converts Elements2 to code', () async {
       final result = await resolveFiles(
-        "import 'dart:async' as async;\n"
-        "import 'dart:io' as io;\n",
+        """
+import 'dart:async' as async;
+import 'dart:io' as io;
+
+dynamic fn() {}
+Invalid fn2() {}
+""",
       );
 
       final controllerElement =
@@ -416,6 +421,9 @@ Hello _0.StreamController World'''),
       controllerElement as ClassElement2;
       final fileElement = result.importedElementWithName('File')!;
       fileElement as ClassElement2;
+
+      final fnElement = result.libraryElement2.getTopLevelFunction('fn')!;
+      final fn2Element = result.libraryElement2.getTopLevelFunction('fn2')!;
 
       final controllerType = controllerElement.instantiate(
         typeArguments: [fileElement.thisType],
@@ -430,6 +438,8 @@ Hello _0.StreamController World'''),
         controllerType.toCode(recursive: false),
         '#{{dart:async|StreamController}}',
       );
+      expect(fnElement.returnType.toCode(), '#{{dart:core|dynamic}}');
+      expect(fn2Element.returnType.toCode(), '#{{dart:core|InvalidType}}');
     });
   });
 }

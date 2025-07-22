@@ -14,6 +14,35 @@ import 'revive.dart';
 
 /// Converts a [DartType] into a `#{{uri|type}}` representation.
 extension CodeFor2 on DartType {
+  (Uri, String) get _metaFor {
+    switch (this) {
+      case VoidType():
+        return (Uri.parse('dart:core'), 'void');
+      case DynamicType():
+        return (Uri.parse('dart:core'), 'dynamic');
+      case NeverType():
+        return (Uri.parse('dart:core'), 'Never');
+      case InvalidType():
+        return (Uri.parse('dart:core'), 'InvalidType');
+      default:
+        final element = element3;
+        if (element == null) {
+          throw ArgumentError('Type $this does not have an element');
+        }
+
+        final library = element.library2;
+        if (library == null) {
+          throw ArgumentError('Type $this does not have a library');
+        }
+        final name3 = element.name3;
+        if (name3 == null) {
+          throw ArgumentError('Type $this does not have a name');
+        }
+
+        return (library.uri, name3);
+    }
+  }
+
   /// Converts a [DartType] into a `#{{uri|type}}` representation.
   ///
   /// This string can then be used with [AnalyzerBuffer.write] to interpolate the
@@ -24,19 +53,8 @@ extension CodeFor2 on DartType {
   /// Otherwise, it will only write the type name.
   String toCode({bool recursive = true}) {
     final that = this;
-    final element = element3;
-    if (element == null) {
-      throw ArgumentError('Type $this does not have an element');
-    }
-    final library = element.library2;
-    if (library == null) {
-      throw ArgumentError('Type $this does not have a library');
-    }
-    final name3 = element.name3;
-    if (name3 == null) {
-      throw ArgumentError('Type $this does not have a name');
-    }
-    final nameCode = '#{{${library.uri}|$name3}}';
+    final (uri, name3) = that._metaFor;
+    final nameCode = '#{{$uri|$name3}}';
     switch (that) {
       case ParameterizedType() when recursive:
         final args = that.typeArguments;
@@ -755,14 +773,7 @@ extension on DartType {
       return;
     }
 
-    final name = switch (that) {
-      VoidType() => 'void',
-      DynamicType() => 'dynamic',
-      NeverType() => 'Never',
-      InvalidType() => 'InvalidType',
-      _ => that.element3!.name3!,
-    };
-
+    final (_, name) = that._metaFor;
     if (that is ParameterizedType) {
       onType(
         that.element3?.libraryAdapter(
