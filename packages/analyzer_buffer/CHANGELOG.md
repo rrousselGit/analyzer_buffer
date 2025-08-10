@@ -1,4 +1,4 @@
-## Unreleased patch
+## 0.1.6 - 2025-08-10
 
 - Fixed a bug when importing nested files from other packages
 
