@@ -7,3 +7,4 @@ environment:
 workspace:
   - packages/analyzer_buffer
   - packages/e2e
+  - packages/other

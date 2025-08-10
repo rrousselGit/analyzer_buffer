@@ -276,10 +276,20 @@ class _NormalizedUri {
     switch (uri) {
       case Uri(scheme: 'file' || 'dart'):
         break;
-      case Uri(scheme: 'asset', pathSegments: [final packageName, ...]):
+      case Uri(
+          scheme: 'asset',
+          pathSegments: [final packageName, final firstSegment, ...final rest]
+        ):
         if (packageName != generatedFile._packageName) {
-          throw ArgumentError(
-            'Asset URI $uri does not match the package name ${generatedFile._packageName}',
+          if (firstSegment != 'lib') {
+            throw ArgumentError(
+              'Asset URI $uri does not match the package name ${generatedFile._packageName}',
+            );
+          }
+
+          uri = uri.replace(
+            scheme: 'package',
+            pathSegments: [packageName, ...rest],
           );
         }
 

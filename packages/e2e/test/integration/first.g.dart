@@ -22,3 +22,10 @@ void prefixToRelativePathE2e([
   Object value6 = const relative_reexport.F(),
 ]) =>
     throw UnimplementedError();
+
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+void assetUriE2e([
+  Object value = const other_file.File(),
+]) =>
+    throw UnimplementedError();

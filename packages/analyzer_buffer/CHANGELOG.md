@@ -1,3 +1,7 @@
+## Unreleased patch
+
+- Fixed a bug when importing nested files from other packages
+
 ## 0.1.5 - 2025-07-22
 
 - Fix `DartType.toCode` with dynamic/invalid types.
