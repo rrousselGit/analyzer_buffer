@@ -55,10 +55,11 @@ extension CodeFor2 on DartType {
   String toCode({bool recursive = true}) {
     final that = this;
 
+    String result;
     if (that.alias case final alias?) {
       final uri = alias.element2.library2.uri;
       final name = alias.element2.name3;
-      var result = '#{{$uri|$name}}';
+      result = '#{{$uri|$name}}';
 
       if (recursive && alias.typeArguments.isNotEmpty) {
         final args = alias.typeArguments
@@ -66,20 +67,16 @@ extension CodeFor2 on DartType {
             .join(', ');
         result += '<$args>';
       }
-
-      return result;
-    }
-
-    if (element3 == null) {
+    } else if (element3 == null) {
       switch (that) {
         case InvalidType():
           throw InvalidTypeException();
         case VoidType():
-          return '#{{dart:core|void}}';
+          result = '#{{dart:core|void}}';
         case DynamicType():
-          return '#{{dart:core|dynamic}}';
+          result = '#{{dart:core|dynamic}}';
         case NeverType():
-          return '#{{dart:core|Never}}';
+          result = '#{{dart:core|Never}}';
         case RecordType():
           final buffer = StringBuffer('(');
 
@@ -100,7 +97,7 @@ extension CodeFor2 on DartType {
           }
 
           buffer.write(')');
-          return buffer.toString();
+          result = buffer.toString();
         case FunctionType():
           final buffer = StringBuffer();
           buffer.write(that.returnType.toCode());
@@ -148,25 +145,31 @@ extension CodeFor2 on DartType {
 
           buffer.write(')');
 
-          return buffer.toString();
+          result = buffer.toString();
+
+        case _:
+          throw UnsupportedError('Unknown type $this');
       }
-
-      throw UnsupportedError('Unknown type $this');
+    } else {
+      final (uri, name3) = that._metaFor;
+      final nameCode = '#{{$uri|$name3}}';
+      switch (that) {
+        case ParameterizedType()
+            when recursive && that.typeArguments.isNotEmpty:
+          final argsCode = that.typeArguments
+              .map((e) => e.toCode(recursive: recursive))
+              .join(', ');
+          result = '$nameCode<$argsCode>';
+        case _:
+          result = nameCode;
+      }
     }
 
-    final (uri, name3) = that._metaFor;
-    final nameCode = '#{{$uri|$name3}}';
-    switch (that) {
-      case ParameterizedType() when recursive:
-        final args = that.typeArguments;
-        if (args.isEmpty) break;
-
-        final argsCode =
-            args.map((e) => e.toCode(recursive: recursive)).join(', ');
-        return '$nameCode<$argsCode>';
+    if (nullabilitySuffix == NullabilitySuffix.question) {
+      return '$result?';
     }
 
-    return nameCode;
+    return result;
   }
 }
 

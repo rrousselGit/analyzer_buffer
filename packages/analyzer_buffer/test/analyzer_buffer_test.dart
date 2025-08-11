@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, missing_whitespace_between_adjacent_strings
 
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
@@ -411,6 +411,8 @@ Hello _0.StreamController World'''),
 import 'dart:async' as async;
 import 'dart:io' as io;
 
+typedef TypeAlias<A, B> = (List<A> a, List<B> b);
+
 dynamic fn() {}
 Invalid fn2() {}
 
@@ -420,7 +422,6 @@ int Function(
   required List<int> b,
   List<int> d,
 }) namedFn() => throw UnimplementedError();
-
 int Function(
   List<int> a,
   List<int>, [
@@ -428,16 +429,16 @@ int Function(
 ]) posFn() => throw UnimplementedError();
 
 Never fn5() => throw UnimplementedError();
-
 void fn6() {}
 
 (List<int> a, List<int>, {List<int> b}) record() => throw UnimplementedError();
-
 async.StreamController<io.File> controller() => throw UnimplementedError();
-
-typedef TypeAlias<A, B> = (List<A> a, List<B> b);
-
 TypeAlias<List<int>, List<String>> typeAlias() => throw UnimplementedError();
+
+int? nullable() => null;
+(int?,)? nullableRecord() => (null,);
+int? Function(int?)? nullableFn() => null;
+TypeAlias<int?, String?>? nullableTypeAlias() => null;
 """,
       );
 
@@ -451,6 +452,10 @@ TypeAlias<List<int>, List<String>> typeAlias() => throw UnimplementedError();
         record,
         controller,
         typeAlias,
+        nullable,
+        nullableRecord,
+        nullableFn,
+        nullableTypeAlias,
       ] = result.libraryElement2.topLevelFunctions
           .map((e) => e.returnType)
           .toList();
@@ -518,6 +523,22 @@ TypeAlias<List<int>, List<String>> typeAlias() => throw UnimplementedError();
       expect(
         typeAlias.toCode(recursive: false),
         '#{{package:temp_test/main.dart|TypeAlias}}',
+      );
+
+      expect(nullable.toCode(), '#{{dart:core|int}}?');
+      expect(nullableRecord.toCode(), '(#{{dart:core|int}}?,)?');
+      expect(
+        nullableFn.toCode(),
+        '#{{dart:core|int}}? Function(#{{dart:core|int}}?)?',
+      );
+      expect(
+        nullableTypeAlias.toCode(),
+        '#{{package:temp_test/main.dart|TypeAlias}}<#{{dart:core|int}}?, '
+        '#{{dart:core|String}}?>?',
+      );
+      expect(
+        nullableTypeAlias.toCode(recursive: false),
+        '#{{package:temp_test/main.dart|TypeAlias}}?',
       );
     });
   });
