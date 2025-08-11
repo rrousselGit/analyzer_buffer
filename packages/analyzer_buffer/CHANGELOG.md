@@ -1,4 +1,4 @@
-## 0.1.9
+## 0.1.9 - 2025-08-11
 
 - Fix some bug with indirectly imported objects.
 
