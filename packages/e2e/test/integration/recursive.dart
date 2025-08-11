@@ -1,12 +1,12 @@
-import 'package:e2e/annotation.dart';
-import 'recursive2.dart';
-export 'recursive2.dart';
+// import 'package:e2e/annotation.dart';
+// import 'recursive2.dart';
+// export 'recursive2.dart';
 
-part 'recursive.g.dart';
+// part 'recursive.g.dart';
 
-@E2E()
-void a({
-  int a = 0,
-}) {
-  b();
-}
+// @E2E()
+// void a({
+//   int a = 0,
+// }) {
+//   b();
+// }

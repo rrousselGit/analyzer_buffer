@@ -181,146 +181,67 @@ final class InvalidTypeException implements Exception {
   }
 }
 
-abstract class _Scope {
-  _Scope({
-    required this.uri,
-    required this.show,
-    required this.hide,
-    required this.exports,
-  });
+class _SyntheticImport {
+  _SyntheticImport({required this.uri, required this.prefix});
 
-  final List<String> show;
-  final List<String> hide;
-  final Iterable<_ExportScope> exports;
-  final _NormalizedUri uri;
-
-  bool hasAccessTo(
-    _NormalizedUri? targetUri,
-    String symbol, {
-    Set<_NormalizedUri>? visitedImports,
-  }) {
-    visitedImports ??= {};
-    if (!visitedImports.add(uri)) return false;
-
-    if (show.isNotEmpty && !show.contains(symbol)) return false;
-    if (hide.isNotEmpty && hide.contains(symbol)) return false;
-
-    // We assume that the symbol is present if the URI matches
-    if (targetUri == uri) return true;
-    if (exports.any(
-      (e) => e.hasAccessTo(
-        targetUri,
-        symbol,
-        visitedImports: visitedImports,
-      ),
-    )) {
-      return true;
-    }
-
-    return false;
-  }
-}
-
-class _ExportScope extends _Scope {
-  _ExportScope({
-    required super.uri,
-    required super.show,
-    required super.hide,
-    required super.exports,
-  });
-
-  @override
-  String toString() {
-    final show = this.show.isNotEmpty ? 'show ${this.show.join(', ')}' : '';
-    final hide = this.hide.isNotEmpty ? 'hide ${this.hide.join(', ')}' : '';
-
-    return "export '$uri'$show$hide;";
-  }
-}
-
-class _ImportScope extends _Scope {
-  _ImportScope({
-    required this.prefix,
-    required super.uri,
-    required super.show,
-    required super.hide,
-    required super.exports,
-  });
-
-  final String? prefix;
-
-  @override
-  String toString() {
-    final prefixStr = prefix != null ? ' as $prefix' : '';
-    final show = this.show.isNotEmpty ? 'show ${this.show.join(', ')}' : '';
-    final hide = this.hide.isNotEmpty ? 'hide ${this.hide.join(', ')}' : '';
-
-    return "import '$uri'$prefixStr$show$hide;";
-  }
+  final _CanonicalizedUri uri;
+  final String prefix;
 }
 
 class _TargetNamespace {
   _TargetNamespace(
-    _LibraryAdapter library, {
+    LibraryElement2 library, {
     required this.generatedFile,
-  }) : imports = library.importedLibraries;
+  }) : _fragment = library.firstFragment;
 
   _TargetNamespace.empty({
     required this.generatedFile,
-  }) : imports = [];
+  }) : _fragment = null;
 
-  final Iterable<_ImportScope> imports;
-  final List<_ImportScope> syntheticImports = [];
+  final LibraryFragment? _fragment;
+  final List<_SyntheticImport> syntheticImports = [];
   final _GeneratedFileLocation generatedFile;
 
-  Iterable<_ImportScope> get allImports => imports.followedBy([
-        // TODO only include if dart:core isn't already imported
-        // dart:core is always imported, so we add it as a synthetic import.
-        _ImportScope(
-          prefix: null,
-          uri: _NormalizedUri._(Uri.parse('dart:core')),
-          show: [],
-          hide: [],
-          exports: [],
-        ),
+  ({String? prefix})? findSymbol(_CanonicalizedUri uri, String symbol) {
+    if (uri == _dartCoreUri || _currentFileUri == uri) return (prefix: null);
 
-        // The pack for the current file
-        _ImportScope(
-          prefix: null,
-          uri: _NormalizedUri.fromImportUri(
-            generatedFile: generatedFile,
-            Uri(
-              scheme: 'asset',
-              path: path.joinAll([
-                generatedFile._packageName,
-                path.normalize(generatedFile._path),
-              ]),
-            ),
-          ),
-          show: [],
-          hide: [],
-          exports: [],
-        ),
-      ]).followedBy(syntheticImports);
+    final syntheticImport =
+        syntheticImports.where((e) => e.uri == uri).firstOrNull;
+    if (syntheticImport != null) return (prefix: syntheticImport.prefix,);
 
-  _ImportScope? findSymbol(_NormalizedUri uri, String symbol) {
-    return allImports.where((e) => e.hasAccessTo(uri, symbol)).firstOrNull;
+    if (_fragment case final fragment?) {
+      for (final import in fragment.libraryImports2) {
+        if (import.namespace.definedNames2.containsKey(symbol)) {
+          return (prefix: import.prefix2?.name2,);
+        }
+      }
+    }
+
+    return null;
   }
 
-  _ImportScope import(_NormalizedUri uri, String symbol) {
+  _CanonicalizedUri get _dartCoreUri =>
+      _CanonicalizedUri._(Uri.parse('dart:core'));
+  _CanonicalizedUri get _currentFileUri => _CanonicalizedUri.fromImportUri(
+        generatedFile: generatedFile,
+        Uri(
+          scheme: 'asset',
+          path: path.joinAll([
+            generatedFile._packageName,
+            path.normalize(generatedFile._path),
+          ]),
+        ),
+      );
+
+  ({String? prefix}) import(_CanonicalizedUri uri, String symbol) {
     final import = findSymbol(uri, symbol);
     if (import != null) return import;
 
     final prefix = '_i${syntheticImports.length + 1}';
-    final newImport = _ImportScope(
-      uri: uri,
-      prefix: prefix,
-      show: [],
-      hide: [],
-      exports: [],
+    syntheticImports.add(
+      _SyntheticImport(uri: uri, prefix: prefix),
     );
-    syntheticImports.add(newImport);
-    return newImport;
+    return (prefix: prefix,);
   }
 }
 
@@ -375,10 +296,10 @@ final class _GeneratedFileLocation {
 }
 
 @immutable
-class _NormalizedUri {
-  const _NormalizedUri._(this.uri);
+class _CanonicalizedUri {
+  const _CanonicalizedUri._(this.uri);
 
-  factory _NormalizedUri.fromCode(
+  factory _CanonicalizedUri.fromCode(
     Uri input, {
     required _GeneratedFileLocation generatedFile,
   }) {
@@ -416,32 +337,13 @@ class _NormalizedUri {
         throw UnsupportedError('Unsupported URI: $uri');
     }
 
-    return _NormalizedUri.fromImportUri(
+    return _CanonicalizedUri.fromImportUri(
       uri,
       generatedFile: generatedFile,
     );
   }
 
-  factory _NormalizedUri.fromLibrary(
-    LibraryElement element, {
-    required _GeneratedFileLocation generatedFile,
-  }) {
-    final uri = element.source.uri;
-    if (uri.scheme != 'package' &&
-        uri.scheme != 'asset' &&
-        uri.scheme != 'dart') {
-      throw ArgumentError(
-        'Expected a package/asset/dart URI, but got: $uri',
-      );
-    }
-
-    return _NormalizedUri.fromImportUri(
-      uri,
-      generatedFile: generatedFile,
-    );
-  }
-
-  factory _NormalizedUri.fromLibrary2(
+  factory _CanonicalizedUri.fromLibrary2(
     LibraryElement2 element, {
     required _GeneratedFileLocation generatedFile,
   }) {
@@ -454,13 +356,13 @@ class _NormalizedUri {
       );
     }
 
-    return _NormalizedUri.fromImportUri(
+    return _CanonicalizedUri.fromImportUri(
       uri,
       generatedFile: generatedFile,
     );
   }
 
-  factory _NormalizedUri.fromImportUri(
+  factory _CanonicalizedUri.fromImportUri(
     Uri uri, {
     required _GeneratedFileLocation generatedFile,
   }) {
@@ -483,7 +385,7 @@ class _NormalizedUri {
         );
     }
 
-    return _NormalizedUri._(uri.replace(path: path.normalize(uri.path)));
+    return _CanonicalizedUri._(uri.replace(path: path.normalize(uri.path)));
   }
 
   Uri toImportUri({
@@ -517,7 +419,7 @@ class _NormalizedUri {
 
   @override
   bool operator ==(Object other) {
-    if (other is! _NormalizedUri) return false;
+    if (other is! _CanonicalizedUri) return false;
     return uri == other.uri;
   }
 
@@ -526,7 +428,7 @@ class _NormalizedUri {
 
   @override
   String toString() {
-    return '$_NormalizedUri($uri)';
+    return '$_CanonicalizedUri($uri)';
   }
 }
 
@@ -583,19 +485,9 @@ class AnalyzerBuffer {
     LibraryElement library, {
     String? header,
   }) {
-    final generatedFiles =
-        _GeneratedFileLocation._relativeTo(library.source.uri);
-
-    final namespace = _TargetNamespace(
-      _LegacyLibraryAdapter(library, generatedFiles),
-      generatedFile: generatedFiles,
-    );
-
-    return AnalyzerBuffer._(
-      generatedFile: generatedFiles,
-      namespace: namespace,
+    return AnalyzerBuffer.part2(
+      library as LibraryElement2,
       header: header,
-      autoImport: false,
     );
   }
 
@@ -609,11 +501,7 @@ class AnalyzerBuffer {
     String? header,
   }) {
     final generatedFiles = _GeneratedFileLocation._relativeTo(library.uri);
-
-    final namespace = _TargetNamespace(
-      _LibraryAdapter2(library, generatedFiles),
-      generatedFile: generatedFiles,
-    );
+    final namespace = _TargetNamespace(library, generatedFile: generatedFiles);
 
     return AnalyzerBuffer._(
       generatedFile: generatedFiles,
@@ -642,15 +530,14 @@ class AnalyzerBuffer {
 
   void Function()? Function(String name)? _lookupArg;
 
-  _ImportScope _upsertImport(_NormalizedUri uri, String symbol) {
+  ({String? prefix}) _upsertImport(_CanonicalizedUri uri, String symbol) {
     final find = _namespace.findSymbol(uri, symbol);
     if (find != null) return find;
 
     if (_autoImport) return _namespace.import(uri, symbol);
 
     throw ArgumentError(
-      'Cannot find import for $symbol in $uri, and could not automatically import it.\n'
-      'Available imports:\n${_namespace.allImports.map((e) => e.uri.toString()).join('\n')}',
+      'Cannot find import for $symbol in $uri, and could not automatically import it.',
     );
   }
 
@@ -671,7 +558,13 @@ class AnalyzerBuffer {
       onType: (library, name, suffix, args) {
         String? prefix;
         if (library != null) {
-          prefix = _upsertImport(library.uri, name).prefix;
+          prefix = _upsertImport(
+            _CanonicalizedUri.fromLibrary2(
+              library,
+              generatedFile: _generatedFile,
+            ),
+            name,
+          ).prefix;
         }
 
         if (prefix != null) {
@@ -826,7 +719,6 @@ class AnalyzerBuffer {
         final prefix = e.prefix;
         final targetUri = e.uri.toImportUri(generatedFile: _generatedFile);
 
-        if (prefix == null) return "import '$targetUri';";
         return "import '$targetUri' as $prefix;";
       }),
       _buffer,
@@ -837,14 +729,14 @@ class AnalyzerBuffer {
 void _parseCode(
   String code, {
   required void Function(String arg) onArg,
-  required void Function(_NormalizedUri uri, String type) onUri,
+  required void Function(_CanonicalizedUri uri, String type) onUri,
   required _GeneratedFileLocation generatedFile,
 }) {
   switch (code.split('|')) {
     case [final argName]:
       onArg(argName);
     case [final uriStr, final type]:
-      final uri = _NormalizedUri.fromCode(
+      final uri = _CanonicalizedUri.fromCode(
         Uri.parse(uriStr),
         generatedFile: generatedFile,
       );
@@ -855,20 +747,10 @@ void _parseCode(
   }
 }
 
-extension on Element2 {
-  _LibraryAdapter2? libraryAdapter({
-    required _GeneratedFileLocation generatedFile,
-  }) =>
-      switch (library2) {
-        null => null,
-        final LibraryElement2 e => _LibraryAdapter2(e, generatedFile),
-      };
-}
-
 extension on DartType {
   void _visit({
     required void Function(
-      _LibraryAdapter? element,
+      LibraryElement2? element,
       String name,
       NullabilitySuffix suffix,
       List<DartType> args,
@@ -879,9 +761,7 @@ extension on DartType {
     final alias = this.alias;
     if (alias != null) {
       onType(
-        alias.element2.libraryAdapter(
-          generatedFile: generatedFile,
-        ),
+        alias.element2.library2,
         alias.element2.name3!,
         nullabilitySuffix,
         alias.typeArguments,
@@ -898,9 +778,7 @@ extension on DartType {
     final (_, name) = that._metaFor;
     if (that is ParameterizedType) {
       onType(
-        that.element3?.libraryAdapter(
-          generatedFile: generatedFile,
-        ),
+        that.element3?.library2,
         name,
         nullabilitySuffix,
         that.typeArguments,
@@ -909,167 +787,10 @@ extension on DartType {
     }
 
     onType(
-      that.element3?.libraryAdapter(
-        generatedFile: generatedFile,
-      ),
+      that.element3?.library2,
       name,
       nullabilitySuffix,
       [],
     );
-  }
-}
-
-@immutable
-abstract base class _LibraryAdapter<T extends _LibraryAdapter<T>> {
-  _NormalizedUri get uri;
-  Iterable<_ImportScope> get importedLibraries;
-  Iterable<_ExportScope> get exportedLibraries;
-
-  @override
-  bool operator ==(Object other) =>
-      other is _LibraryAdapter && other.uri == uri;
-
-  @override
-  int get hashCode => uri.hashCode;
-
-  @override
-  String toString() {
-    return '$runtimeType($uri})';
-  }
-}
-
-final class _LegacyLibraryAdapter
-    extends _LibraryAdapter<_LegacyLibraryAdapter> {
-  _LegacyLibraryAdapter(this.library, this.generatedFile);
-
-  final LibraryElement library;
-  final _GeneratedFileLocation generatedFile;
-
-  @override
-  _NormalizedUri get uri => _NormalizedUri.fromLibrary(
-        library,
-        generatedFile: generatedFile,
-      );
-
-  @override
-  Iterable<_ImportScope> get importedLibraries sync* {
-    for (final importedLibrary in library.importedLibraries) {
-      final import = library.definingCompilationUnit.libraryImportPrefixes
-          .expand((e) => e.imports)
-          .where(
-            (e) => e.importedLibrary?.source.uri == importedLibrary.source.uri,
-          )
-          .firstOrNull;
-
-      yield _ImportScope(
-        uri: _NormalizedUri.fromLibrary(
-          importedLibrary,
-          generatedFile: generatedFile,
-        ),
-        prefix: import?.prefix?.element.name,
-        show: import?.combinators
-                .whereType<ShowElementCombinator>()
-                .expand((e) => e.shownNames)
-                .toList() ??
-            [],
-        hide: import?.combinators
-                .whereType<HideElementCombinator>()
-                .expand((e) => e.hiddenNames)
-                .toList() ??
-            [],
-        exports: _LegacyLibraryAdapter(importedLibrary, generatedFile)
-            .exportedLibraries,
-      );
-    }
-  }
-
-  @override
-  Iterable<_ExportScope> get exportedLibraries sync* {
-    for (final export in library.definingCompilationUnit.libraryExports) {
-      final exportedLibrary = export.exportedLibrary;
-      if (exportedLibrary == null) continue;
-
-      yield _ExportScope(
-        uri: _NormalizedUri.fromLibrary(
-          exportedLibrary,
-          generatedFile: generatedFile,
-        ),
-        show: export.combinators
-            .whereType<ShowElementCombinator>()
-            .expand((e) => e.shownNames)
-            .toList(),
-        hide: export.combinators
-            .whereType<HideElementCombinator>()
-            .expand((e) => e.hiddenNames)
-            .toList(),
-        exports: _LegacyLibraryAdapter(exportedLibrary, generatedFile)
-            .exportedLibraries,
-      );
-    }
-  }
-}
-
-final class _LibraryAdapter2 extends _LibraryAdapter<_LibraryAdapter2> {
-  _LibraryAdapter2(this.library, this.generatedFile);
-  final LibraryElement2 library;
-  final _GeneratedFileLocation generatedFile;
-
-  @override
-  _NormalizedUri get uri =>
-      _NormalizedUri.fromLibrary2(library, generatedFile: generatedFile);
-
-  @override
-  Iterable<_ImportScope> get importedLibraries sync* {
-    for (final importPrefix in library.fragments) {
-      for (final import in importPrefix.libraryImports2) {
-        final importedLibrary2 = import.importedLibrary2;
-        if (importedLibrary2 == null) continue;
-
-        yield _ImportScope(
-          uri: _NormalizedUri.fromLibrary2(
-            importedLibrary2,
-            generatedFile: generatedFile,
-          ),
-          prefix: import.prefix2?.element.name3,
-          show: import.combinators
-              .whereType<ShowElementCombinator>()
-              .expand((e) => e.shownNames)
-              .toList(),
-          hide: import.combinators
-              .whereType<HideElementCombinator>()
-              .expand((e) => e.hiddenNames)
-              .toList(),
-          exports: _LibraryAdapter2(importedLibrary2, generatedFile)
-              .exportedLibraries,
-        );
-      }
-    }
-  }
-
-  @override
-  Iterable<_ExportScope> get exportedLibraries sync* {
-    for (final export in library.fragments) {
-      for (final exportedLibrary in export.libraryExports2) {
-        final exportedLibrary2 = exportedLibrary.exportedLibrary2;
-        if (exportedLibrary2 == null) continue;
-
-        yield _ExportScope(
-          uri: _NormalizedUri.fromLibrary2(
-            exportedLibrary2,
-            generatedFile: generatedFile,
-          ),
-          show: exportedLibrary.combinators
-              .whereType<ShowElementCombinator>()
-              .expand((e) => e.shownNames)
-              .toList(),
-          hide: exportedLibrary.combinators
-              .whereType<HideElementCombinator>()
-              .expand((e) => e.hiddenNames)
-              .toList(),
-          exports: _LibraryAdapter2(exportedLibrary2, generatedFile)
-              .exportedLibraries,
-        );
-      }
-    }
   }
 }

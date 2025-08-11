@@ -3,6 +3,7 @@ public_to: none
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.10.0"
 
 workspace:
   - packages/analyzer_buffer

@@ -3,18 +3,20 @@
 import 'package:e2e/annotation.dart';
 import 'package:e2e/e2e/d.dart' as package_prefix;
 import 'package:e2e/e2e/e2.dart' as package_reexport;
+// Used for ValueNotifier regression test
+import 'package:flutter/widgets.dart';
 
 import '../e2e/b.dart' as not_normalized_path_prefix;
 import 'a.dart' as prefix;
 import 'c.dart' as direct_path_prefix;
 import 'f2.dart' as relative_reexport;
 
-part 'first.g.dart';
+part 'libe2e.g.dart';
 
 class Foo {
   const Foo();
 }
-
+// 
 @E2E()
 void fn([Object value = const Foo()]) {}
 
@@ -26,4 +28,9 @@ void prefixToRelativePath([
   Object value4 = const package_prefix.D(),
   Object value5 = const package_reexport.E(),
   Object value6 = const relative_reexport.F(),
+]) {}
+
+@E2E()
+void notifierRegression([
+  ValueNotifier<int>? value,
 ]) {}

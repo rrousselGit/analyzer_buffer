@@ -1,3 +1,7 @@
+## 0.1.9
+
+- Fix some bug with indirectly imported objects.
+
 ## 0.1.8 - 2025-08-11
 
 - Fix `DartType.toCode` with nullable types

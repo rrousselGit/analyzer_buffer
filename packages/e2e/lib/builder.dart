@@ -57,14 +57,14 @@ class E2ELibrary extends Generator {
       header: '// ignore_for_file: type=lint, type=warning',
     );
 
-    final elements = library.annotatedWith(
-      const TypeChecker.fromRuntime(E2E),
-    );
+    // final elements = library.annotatedWith(
+    //   const TypeChecker.fromRuntime(E2E),
+    // );
 
-    for (final annotation in elements) {
-      final element = annotation.element;
-      _handle(element, buffer);
-    }
+    // for (final annotation in elements) {
+    //   final element = annotation.element;
+    //   _handle(element, buffer);
+    // }
 
     return buffer.toString();
   }
