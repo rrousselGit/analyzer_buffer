@@ -1,4 +1,4 @@
-## Unreleased patch
+## 0.1.7 - 2025-08-11
 
 - Fixed `DartType.toCode` with typedefs, records, and many other types.
 
