@@ -49,10 +49,111 @@ extension CodeFor2 on DartType {
   /// element's code into a generated file.
   ///
   /// If [recursive] is true (default), it will also write the type arguments
-  /// of the type, if any.
-  /// Otherwise, it will only write the type name.
+  /// of the type, if any. Otherwise, it will only write the type name.
+  /// This only impacts parameterized types, such as `List<int>`. It has no
+  /// effect on other types, such as `(int, )` and function types.
   String toCode({bool recursive = true}) {
     final that = this;
+
+    if (that.alias case final alias?) {
+      final uri = alias.element2.library2.uri;
+      final name = alias.element2.name3;
+      var result = '#{{$uri|$name}}';
+
+      if (recursive && alias.typeArguments.isNotEmpty) {
+        final args = alias.typeArguments
+            .map((e) => e.toCode(recursive: recursive))
+            .join(', ');
+        result += '<$args>';
+      }
+
+      return result;
+    }
+
+    if (element3 == null) {
+      switch (that) {
+        case InvalidType():
+          throw InvalidTypeException();
+        case VoidType():
+          return '#{{dart:core|void}}';
+        case DynamicType():
+          return '#{{dart:core|dynamic}}';
+        case NeverType():
+          return '#{{dart:core|Never}}';
+        case RecordType():
+          final buffer = StringBuffer('(');
+
+          for (final (index, field) in that.positionalFields.indexed) {
+            if (index > 0) buffer.write(' ');
+            buffer.write('${field.type.toCode()},');
+          }
+
+          if (that.namedFields.isNotEmpty) {
+            if (that.positionalFields.isNotEmpty) buffer.write(' ');
+            buffer.write('{');
+
+            for (final (index, field) in that.namedFields.indexed) {
+              if (index > 0) buffer.write(' ');
+              buffer.write('${field.type.toCode()} ${field.name},');
+            }
+            buffer.write('}');
+          }
+
+          buffer.write(')');
+          return buffer.toString();
+        case FunctionType():
+          final buffer = StringBuffer();
+          buffer.write(that.returnType.toCode());
+          buffer.write(' Function(');
+
+          final requiredPositionals =
+              that.formalParameters.where((e) => e.isRequiredPositional);
+          final optionalPositionals =
+              that.formalParameters.where((e) => e.isOptionalPositional);
+          final named = that.formalParameters.where((e) => e.isNamed);
+
+          for (final (index, param) in requiredPositionals.indexed) {
+            if (index > 0) buffer.write(', ');
+            buffer.write(param.type.toCode());
+            final name = param.name3;
+            if (name != null && name.isNotEmpty) buffer.write(' $name');
+          }
+
+          if (optionalPositionals.isNotEmpty) {
+            if (requiredPositionals.isNotEmpty) buffer.write(', ');
+            buffer.write('[');
+            for (final (index, param) in optionalPositionals.indexed) {
+              if (index > 0) buffer.write(', ');
+              buffer.write(param.type.toCode());
+              final name = param.name3;
+              if (name != null && name.isNotEmpty) buffer.write(' $name');
+            }
+            buffer.write(']');
+          }
+
+          if (named.isNotEmpty) {
+            if (requiredPositionals.isNotEmpty ||
+                optionalPositionals.isNotEmpty) {
+              buffer.write(', ');
+            }
+            buffer.write('{');
+            for (final (index, param) in named.indexed) {
+              if (index > 0) buffer.write(', ');
+              buffer.write(param.type.toCode());
+              final name = param.name3;
+              if (name != null && name.isNotEmpty) buffer.write(' $name');
+            }
+            buffer.write('}');
+          }
+
+          buffer.write(')');
+
+          return buffer.toString();
+      }
+
+      throw UnsupportedError('Unknown type $this');
+    }
+
     final (uri, name3) = that._metaFor;
     final nameCode = '#{{$uri|$name3}}';
     switch (that) {
@@ -66,6 +167,14 @@ extension CodeFor2 on DartType {
     }
 
     return nameCode;
+  }
+}
+
+/// An exception that is thrown when a type is invalid and cannot be converted to code.
+final class InvalidTypeException implements Exception {
+  @override
+  String toString() {
+    return 'InvalidTypeException: The type is invalid and cannot be converted to code.';
   }
 }
 

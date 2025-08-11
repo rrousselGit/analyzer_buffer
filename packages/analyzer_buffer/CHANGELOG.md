@@ -1,3 +1,7 @@
+## Unreleased patch
+
+- Fixed `DartType.toCode` with typedefs, records, and many other types.
+
 ## 0.1.6 - 2025-08-10
 
 - Fixed a bug when importing nested files from other packages

@@ -413,33 +413,112 @@ import 'dart:io' as io;
 
 dynamic fn() {}
 Invalid fn2() {}
+
+int Function(
+  List<int> a,
+  List<int>, {
+  required List<int> b,
+  List<int> d,
+}) namedFn() => throw UnimplementedError();
+
+int Function(
+  List<int> a,
+  List<int>, [
+  List<int> d,
+]) posFn() => throw UnimplementedError();
+
+Never fn5() => throw UnimplementedError();
+
+void fn6() {}
+
+(List<int> a, List<int>, {List<int> b}) record() => throw UnimplementedError();
+
+async.StreamController<io.File> controller() => throw UnimplementedError();
+
+typedef TypeAlias<A, B> = (List<A> a, List<B> b);
+
+TypeAlias<List<int>, List<String>> typeAlias() => throw UnimplementedError();
 """,
       );
 
-      final controllerElement =
-          result.importedElementWithName('StreamController')!;
-      controllerElement as ClassElement2;
-      final fileElement = result.importedElementWithName('File')!;
-      fileElement as ClassElement2;
-
-      final fnElement = result.libraryElement2.getTopLevelFunction('fn')!;
-      final fn2Element = result.libraryElement2.getTopLevelFunction('fn2')!;
-
-      final controllerType = controllerElement.instantiate(
-        typeArguments: [fileElement.thisType],
-        nullabilitySuffix: NullabilitySuffix.none,
-      );
+      final [
+        fn,
+        fn2,
+        namedFn,
+        posFn,
+        fn5,
+        fn6,
+        record,
+        controller,
+        typeAlias,
+      ] = result.libraryElement2.topLevelFunctions
+          .map((e) => e.returnType)
+          .toList();
 
       expect(
-        controllerType.toCode(),
+        controller.toCode(),
         '#{{dart:async|StreamController}}<#{{dart:io|File}}>',
       );
       expect(
-        controllerType.toCode(recursive: false),
+        controller.toCode(recursive: false),
         '#{{dart:async|StreamController}}',
       );
-      expect(fnElement.returnType.toCode(), '#{{dart:core|dynamic}}');
-      expect(fn2Element.returnType.toCode(), '#{{dart:core|InvalidType}}');
+      expect(fn.toCode(), '#{{dart:core|dynamic}}');
+      expect(fn2.toCode, throwsA(isA<InvalidTypeException>()));
+      expect(
+        namedFn.toCode(),
+        '#{{dart:core|int}} Function('
+        '#{{dart:core|List}}<#{{dart:core|int}}> a, '
+        '#{{dart:core|List}}<#{{dart:core|int}}>, {'
+        '#{{dart:core|List}}<#{{dart:core|int}}> b, '
+        '#{{dart:core|List}}<#{{dart:core|int}}> d})',
+      );
+      expect(
+        namedFn.toCode(recursive: false),
+        '#{{dart:core|int}} Function('
+        '#{{dart:core|List}}<#{{dart:core|int}}> a, '
+        '#{{dart:core|List}}<#{{dart:core|int}}>, {'
+        '#{{dart:core|List}}<#{{dart:core|int}}> b, '
+        '#{{dart:core|List}}<#{{dart:core|int}}> d})',
+      );
+      expect(
+        posFn.toCode(),
+        '#{{dart:core|int}} Function('
+        '#{{dart:core|List}}<#{{dart:core|int}}> a, '
+        '#{{dart:core|List}}<#{{dart:core|int}}>, ['
+        '#{{dart:core|List}}<#{{dart:core|int}}> d])',
+      );
+      expect(
+        posFn.toCode(recursive: false),
+        '#{{dart:core|int}} Function('
+        '#{{dart:core|List}}<#{{dart:core|int}}> a, '
+        '#{{dart:core|List}}<#{{dart:core|int}}>, ['
+        '#{{dart:core|List}}<#{{dart:core|int}}> d'
+        '])',
+      );
+      expect(fn5.toCode(), '#{{dart:core|Never}}');
+      expect(fn6.toCode(), '#{{dart:core|void}}');
+      expect(
+        record.toCode(),
+        '(#{{dart:core|List}}<#{{dart:core|int}}>, '
+        '#{{dart:core|List}}<#{{dart:core|int}}>, {'
+        '#{{dart:core|List}}<#{{dart:core|int}}> b,})',
+      );
+      expect(
+        record.toCode(recursive: false),
+        '(#{{dart:core|List}}<#{{dart:core|int}}>, '
+        '#{{dart:core|List}}<#{{dart:core|int}}>, {'
+        '#{{dart:core|List}}<#{{dart:core|int}}> b,})',
+      );
+      expect(
+        typeAlias.toCode(),
+        '#{{package:temp_test/main.dart|TypeAlias}}<#{{dart:core|List}}<#{{dart:core|int}}>, '
+        '#{{dart:core|List}}<#{{dart:core|String}}>>',
+      );
+      expect(
+        typeAlias.toCode(recursive: false),
+        '#{{package:temp_test/main.dart|TypeAlias}}',
+      );
     });
   });
 }
