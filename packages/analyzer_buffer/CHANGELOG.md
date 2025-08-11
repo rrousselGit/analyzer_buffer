@@ -1,4 +1,4 @@
-## Unreleased patch
+## 0.1.8 - 2025-08-11
 
 - Fix `DartType.toCode` with nullable types
 
