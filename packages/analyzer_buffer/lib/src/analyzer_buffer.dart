@@ -136,6 +136,7 @@ extension CodeFor2 on DartType {
             buffer.write('{');
             for (final (index, param) in named.indexed) {
               if (index > 0) buffer.write(', ');
+              if (param.isRequired) buffer.write('required ');
               buffer.write(param.type.toCode());
               final name = param.name3;
               if (name != null && name.isNotEmpty) buffer.write(' $name');
