@@ -475,7 +475,7 @@ TypeAlias<int?, String?>? nullableTypeAlias() => null;
         '#{{dart:core|int}} Function('
         '#{{dart:core|List}}<#{{dart:core|int}}> a, '
         '#{{dart:core|List}}<#{{dart:core|int}}>, {'
-        '#{{dart:core|List}}<#{{dart:core|int}}> b, '
+        'required #{{dart:core|List}}<#{{dart:core|int}}> b, '
         '#{{dart:core|List}}<#{{dart:core|int}}> d})',
       );
       expect(
@@ -483,7 +483,7 @@ TypeAlias<int?, String?>? nullableTypeAlias() => null;
         '#{{dart:core|int}} Function('
         '#{{dart:core|List}}<#{{dart:core|int}}> a, '
         '#{{dart:core|List}}<#{{dart:core|int}}>, {'
-        '#{{dart:core|List}}<#{{dart:core|int}}> b, '
+        'required #{{dart:core|List}}<#{{dart:core|int}}> b, '
         '#{{dart:core|List}}<#{{dart:core|int}}> d})',
       );
       expect(

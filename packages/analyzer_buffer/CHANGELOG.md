@@ -1,3 +1,8 @@
+## Unreleased patch
+
+- Fix some issue with `functionType.toCode` not including `required`
+  (thanks to @TekExplorer)
+
 ## 0.1.9 - 2025-08-11
 
 - Fix some bug with indirectly imported objects.
