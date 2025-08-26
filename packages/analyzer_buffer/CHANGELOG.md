@@ -1,4 +1,4 @@
-## Unreleased patch
+## 0.1.10 - 2025-08-26
 
 - Fix some issue with `functionType.toCode` not including `required`
   (thanks to @TekExplorer)
