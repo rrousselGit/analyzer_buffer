@@ -1,7 +1,7 @@
 ## 0.1.11 - 2025-09-07
 
 Updated dependencies to support analyzer v8
-This allows for compatibility with upgraded generators using analyzer v8, source_gen v4, and even build v4
+This allows for compatibility with upgraded generators using analyzer v8 and source_gen v4
   (thanks to @TekExplorer)
 
 - `analyzer: '>=7.3.0 <9.0.0'`
