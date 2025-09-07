@@ -1,5 +1,5 @@
 name: analyzer_buffer
-version: 0.1.10
+version: 0.1.11
 description: A package to help writing code-generators while supporting import prefixes and default values
 repository: https://github.com/rrousselGit/analyzer_buffer
 
@@ -9,11 +9,11 @@ environment:
 resolution: workspace
 
 dependencies:
-  analyzer: ^7.3.0
+  analyzer: '>=7.3.0 <9.0.0'
   collection: ^1.19.1
   meta: ^1.15.0
   path: ^1.9.1
-  source_gen: ^3.0.0
+  source_gen: '>=3.0.0 <5.0.0'
 
 dev_dependencies:
   test: ^1.25.15
