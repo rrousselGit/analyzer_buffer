@@ -1,4 +1,4 @@
-## Unreleased patch
+## 0.1.11 - 2025-09-09
 
 Updated dependencies to support analyzer v8
 This allows for compatibility with upgraded generators using analyzer v8 and source_gen v4
