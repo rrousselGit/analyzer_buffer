@@ -1,3 +1,12 @@
+## Unreleased patch
+
+Updated dependencies to support analyzer v8
+This allows for compatibility with upgraded generators using analyzer v8 and source_gen v4
+  (thanks to @TekExplorer)
+
+- `analyzer: '>=7.3.0 <9.0.0'`
+- `source_gen: '>=3.0.0 <5.0.0'`
+
 ## 0.1.10 - 2025-08-26
 
 - Fix some issue with `functionType.toCode` not including `required`

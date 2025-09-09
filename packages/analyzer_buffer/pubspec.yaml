@@ -9,11 +9,11 @@ environment:
 resolution: workspace
 
 dependencies:
-  analyzer: ^7.3.0
+  analyzer: ^8.0.0
   collection: ^1.19.1
   meta: ^1.15.0
   path: ^1.9.1
-  source_gen: ^3.0.0
+  source_gen: ^4.0.0
 
 dev_dependencies:
   test: ^1.25.15

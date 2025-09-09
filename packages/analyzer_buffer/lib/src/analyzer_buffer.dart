@@ -487,7 +487,7 @@ class AnalyzerBuffer {
     String? header,
   }) {
     return AnalyzerBuffer.part2(
-      library as LibraryElement2,
+      library,
       header: header,
     );
   }

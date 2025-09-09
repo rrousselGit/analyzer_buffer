@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer_buffer/analyzer_buffer.dart';
 import 'package:test/test.dart';
 
@@ -21,7 +21,7 @@ void fn({
 }) {}
 ''');
 
-      final fn = result.libraryElement2.getTopLevelFunction('fn')!;
+      final fn = result.libraryElement.getTopLevelFunction('fn')!;
       final [
         record,
         objectWithoutTypeArgs,
@@ -112,11 +112,11 @@ class Holder<T> {
 ''');
       final controllerElement =
           result.importedElementWithName('StreamController')!;
-      controllerElement as ClassElement2;
+      controllerElement as ClassElement;
       final fileElement = result.importedElementWithName('File')!;
-      fileElement as ClassElement2;
+      fileElement as ClassElement;
 
-      final fn = result.libraryElement2.getClass2('Holder')!.getMethod2('fn')!;
+      final fn = result.libraryElement.getClass('Holder')!.getMethod('fn')!;
       final [
         str,
         str2,

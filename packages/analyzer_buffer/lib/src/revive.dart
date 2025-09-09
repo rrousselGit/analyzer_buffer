@@ -1,5 +1,5 @@
 import 'package:analyzer/dart/constant/value.dart';
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -49,22 +49,22 @@ extension RevivableToSource on DartObject {
     switch (type) {
       case _Null():
         return 'null';
-      case _Variable(value: final TopLevelVariableElement2 variable):
-        return _code(variable.library2.uri, variable.name3!);
-      case _Variable(value: VariableElement2(isStatic: true) && final variable):
+      case _Variable(value: final TopLevelVariableElement variable):
+        return _code(variable.library.uri, variable.name!);
+      case _Variable(value: VariableElement(isStatic: true) && final variable):
         final enclosingClass =
-            variable.thisOrAncestorOfType2<InterfaceElement2>();
+            variable.thisOrAncestorOfType<InterfaceElement>();
         if (enclosingClass == null) {
           throw StateError(
-            'Could not find the enclosing class for ${variable.name3}.',
+            'Could not find the enclosing class for ${variable.name}.',
           );
         }
 
-        return '${enclosingClass.thisType.toCode(recursive: false)}.${variable.name3}';
-      case _Variable(value: VariableElement2(isStatic: false)):
+        return '${enclosingClass.thisType.toCode(recursive: false)}.${variable.name}';
+      case _Variable(value: VariableElement(isStatic: false)):
         // This is a local variable, which cannot be represented in code.
         throw UnsupportedError(
-          'Local variables cannot be represented in code: ${type.value.name3}',
+          'Local variables cannot be represented in code: ${type.value.name}',
         );
       case _String():
         return "'${_escapeString(type.value)}'";
@@ -120,7 +120,7 @@ extension RevivableToSource on DartObject {
 sealed class _DartObjectTypes {
   static _DartObjectTypes fromDartObject(DartObject dartObject) {
     // Handles vars first, to preserve any variable usage.
-    if (dartObject.variable2 case final variable?) return _Variable(variable);
+    if (dartObject.variable case final variable?) return _Variable(variable);
     if (dartObject.isNull) return const _Null();
     if (dartObject.toStringValue() case final value?) return _String(value);
     if (dartObject.toIntValue() case final value?) return _Int(value);
@@ -159,7 +159,7 @@ class _Null implements _DartObjectTypes {
 class _Variable implements _DartObjectTypes {
   _Variable(this.value);
   @override
-  final VariableElement2 value;
+  final VariableElement value;
 }
 
 class _String implements _DartObjectTypes {

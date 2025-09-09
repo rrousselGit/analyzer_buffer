@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/analysis/utilities.dart';
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
@@ -27,8 +27,8 @@ Directory tempDir() {
 }
 
 extension ImportedElementWithName on ResolvedUnitResult {
-  Element2? importedElementWithName(String name) {
-    return libraryFragment.importedLibraries2
+  Element? importedElementWithName(String name) {
+    return libraryFragment.importedLibraries
         .map((e) => e.exportNamespace.get2(name))
         .nonNulls
         .singleOrNull;
@@ -65,11 +65,11 @@ dependencies:
 
   await pubGet(project);
 
-  final result = await resolveFile2(path: main.absolute.path);
+  final result = await resolveFile(path: main.absolute.path);
   result as ResolvedUnitResult;
 
-  final syntaxErrors = result.errors.where(
-    (e) => e.errorCode.type == ErrorType.SYNTACTIC_ERROR,
+  final syntaxErrors = result.diagnostics.where(
+    (e) => e.diagnosticCode.type == DiagnosticType.SYNTACTIC_ERROR,
   );
 
   if (syntaxErrors.isNotEmpty) {
