@@ -1,7 +1,5 @@
 // ignore_for_file: experimental_member_use, deprecated_member_use, missing_whitespace_between_adjacent_strings
 
-import 'package:analyzer/dart/element/element2.dart';
-import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer_buffer/analyzer_buffer.dart';
 import 'package:test/test.dart';
 
@@ -33,200 +31,11 @@ int value() => 42;
 
       expect(buffer.isEmpty, isTrue);
       expect(buffer.toString(), '');
-      buffer.writeType(type);
+      buffer.write(type.toCode());
       expect(buffer.isEmpty, isFalse);
       expect(buffer.toString(), isNotEmpty);
     });
 
-    group('writeType', () {
-      test('preserves typedefs, if any', () async {
-        final result = await resolveFiles('''
-part 'foo.g.dart';
-
-typedef MyMap<T> = Map<T, T>;
-
-MyMap<int> value() => 42;
-''');
-
-        final buffer = AnalyzerBuffer.part2(result.libraryElement2);
-
-        final valueElement =
-            result.libraryElement2.getTopLevelFunction('value')!;
-
-        buffer.write('Hello(');
-        buffer.writeType(valueElement.returnType);
-        buffer.write(') World');
-
-        expect(
-          buffer.toString(),
-          contains('Hello(MyMap<int>) World'),
-        );
-      });
-      test('supports dynamic/invalid types', () async {
-        final result = await resolveFiles('''
-part 'foo.g.dart';
-
-dynamic fn() {}
-Invalid fn2() {}
-''');
-
-        final buffer = AnalyzerBuffer.part2(result.libraryElement2);
-
-        final fnElement = result.libraryElement2.getTopLevelFunction('fn')!;
-        final fn2Element = result.libraryElement2.getTopLevelFunction('fn2')!;
-
-        buffer.write('Hello(');
-        buffer.writeType(fnElement.returnType);
-        buffer.write(') World');
-
-        buffer.write('Hello(');
-        buffer.writeType(fn2Element.returnType);
-        buffer.write(') World');
-
-        expect(
-          buffer.toString(),
-          contains('Hello(dynamic) World'),
-        );
-        expect(
-          buffer.toString(),
-          contains('Hello(InvalidType) World'),
-        );
-      });
-      test('recursive: controls whether type arguments are written', () async {
-        final result = await resolveFiles("""
-import 'dart:async' as async;
-
-part 'foo.g.dart';
-""");
-        final buffer = AnalyzerBuffer.part2(result.libraryElement2);
-
-        final controllerElement =
-            result.importedElementWithName('StreamController')!;
-        controllerElement as ClassElement2;
-
-        final controllerType = controllerElement.instantiate(
-          typeArguments: [result.libraryElement2.typeProvider.doubleType],
-          nullabilitySuffix: NullabilitySuffix.none,
-        );
-
-        buffer.write('Hello(');
-        buffer.writeType(controllerType, recursive: false);
-        buffer.write(') World');
-
-        expect(
-          buffer.toString(),
-          contains('Hello(async.StreamController) World'),
-        );
-      });
-      test('respects import prefixes', () async {
-        final result = await resolveFiles(
-          "import 'dart:async' as async;\n"
-          "import 'dart:io' as io;\n"
-          "import 'package:path/path.dart';\n"
-          "part 'foo.g.dart';\n",
-        );
-        final buffer = AnalyzerBuffer.part(result.libraryElement);
-        final buffer2 = AnalyzerBuffer.part2(result.libraryElement2);
-
-        final controllerElement =
-            result.importedElementWithName('StreamController')!;
-        controllerElement as ClassElement2;
-        final fileElement = result.importedElementWithName('File')!;
-        fileElement as ClassElement2;
-        final contextElement = result.importedElementWithName('Context')!;
-        contextElement as ClassElement2;
-
-        final controllerType = controllerElement.instantiate(
-          typeArguments: [fileElement.thisType],
-          nullabilitySuffix: NullabilitySuffix.none,
-        );
-
-        buffer.write('Hello(');
-        buffer.writeType(controllerType);
-        buffer.write(') World');
-
-        buffer.write('Hello(');
-        buffer.writeType(contextElement.thisType);
-        buffer.write(') World');
-
-        buffer2.write('Hello(');
-        buffer2.writeType(controllerType);
-        buffer2.write(') World');
-
-        buffer2.write('Hello(');
-        buffer2.writeType(contextElement.thisType);
-        buffer2.write(') World');
-
-        expect(
-          buffer.toString(),
-          contains('Hello(async.StreamController<io.File>) World'),
-        );
-        expect(
-          buffer.toString(),
-          contains('Hello(Context) World'),
-        );
-
-        expect(
-          buffer2.toString(),
-          contains('Hello(async.StreamController<io.File>) World'),
-        );
-        expect(
-          buffer2.toString(),
-          contains('Hello(Context) World'),
-        );
-      });
-      test('if created with .newLibrary, adds auto-imports for types',
-          () async {
-        final buffer = AnalyzerBuffer.newLibrary(
-          packageName: 'temp_test',
-          path: 'lib/foo.g.dart',
-        );
-
-        final result = await resolveFiles(
-          "import 'dart:async' as async;\n"
-          "import 'dart:io' as io;\n"
-          "import 'package:path/path.dart';\n"
-          "part 'foo.g.dart';\n",
-        );
-
-        final controllerElement =
-            result.importedElementWithName('StreamController')!;
-        controllerElement as ClassElement2;
-        final fileElement = result.importedElementWithName('File')!;
-        fileElement as ClassElement2;
-
-        final controllerType = controllerElement.instantiate(
-          typeArguments: [fileElement.thisType],
-          nullabilitySuffix: NullabilitySuffix.none,
-        );
-        final controllerType2 = controllerElement.instantiate(
-          typeArguments: [result.typeProvider.voidType],
-          nullabilitySuffix: NullabilitySuffix.none,
-        );
-
-        buffer.writeType(controllerType);
-        buffer.writeType(controllerType2);
-
-        expect(
-          buffer.toString(),
-          matchesIgnoringPrefixes(
-            strContainsOnce("import 'dart:async' as _0;"),
-          ),
-        );
-        expect(
-          buffer.toString(),
-          matchesIgnoringPrefixes(strContainsOnce("import 'dart:io' as _1;")),
-        );
-        expect(
-          buffer.toString(),
-          isNot(
-            matchesIgnoringPrefixes(
-              strContainsOnce("import 'package:path/path.dart' as _2;"),
-            ),
-          ),
-        );
-      });
-    });
     group('toString', () {
       test('includes a top comment, headers, imports and writes', () {
         final buffer = AnalyzerBuffer.newLibrary(
@@ -248,6 +57,36 @@ Hello _0.StreamController World'''),
       });
     });
     group('write', () {
+      test('differentiates classes with the same name from different libs',
+          () async {
+        final result = await resolveFiles(files: {
+          'foo.dart': 'class Name {}',
+          'bar.dart': 'class Name {}',
+        }, '''
+import 'foo.dart' as foo;
+import 'bar.dart' as bar;
+''');
+
+        final buffer = AnalyzerBuffer.part(result.libraryElement);
+        final buffer2 = AnalyzerBuffer.part2(result.libraryElement2);
+
+        buffer.write(
+          'Hello #{{temp_test/foo.dart|Name}} and #{{temp_test/bar.dart|Name}} World',
+        );
+        buffer2.write(
+          'Hello #{{temp_test/foo.dart|Name}} and #{{temp_test/bar.dart|Name}} World',
+        );
+
+        expect(
+          buffer.toString(),
+          contains('Hello foo.Name and bar.Name World'),
+        );
+        expect(
+          buffer2.toString(),
+          contains('Hello foo.Name and bar.Name World'),
+        );
+      });
+
       test('handles re-export as prefix', () async {
         final result = await resolveFiles(
           "import 'foo.dart' as foo;\n"
@@ -262,15 +101,11 @@ Hello _0.StreamController World'''),
 
         expect(
           buffer.toString(),
-          matchesIgnoringPrefixes(
-            contains('Hello foo.StreamController World'),
-          ),
+          contains('Hello foo.StreamController World'),
         );
         expect(
           buffer2.toString(),
-          matchesIgnoringPrefixes(
-            contains('Hello foo.StreamController World'),
-          ),
+          contains('Hello foo.StreamController World'),
         );
       });
 
@@ -407,9 +242,15 @@ Hello _0.StreamController World'''),
   group('CodeFor', () {
     test('converts Elements2 to code', () async {
       final result = await resolveFiles(
+        files: {
+          'obj.dart': 'class Obj { const Obj(); }',
+          'obj2.dart': 'class Obj { const Obj(); }',
+        },
         """
 import 'dart:async' as async;
 import 'dart:io' as io;
+import 'obj.dart' as obj1;
+import 'obj2.dart' as obj2;
 
 typedef TypeAlias<A, B> = (List<A> a, List<B> b);
 
@@ -439,6 +280,9 @@ int? nullable() => null;
 (int?,)? nullableRecord() => (null,);
 int? Function(int?)? nullableFn() => null;
 TypeAlias<int?, String?>? nullableTypeAlias() => null;
+
+obj1.Obj prefix1() => obj1.Obj();
+obj2.Obj prefix2() => obj2.Obj();
 """,
       );
 
@@ -456,6 +300,8 @@ TypeAlias<int?, String?>? nullableTypeAlias() => null;
         nullableRecord,
         nullableFn,
         nullableTypeAlias,
+        prefix1,
+        prefix2,
       ] = result.libraryElement2.topLevelFunctions
           .map((e) => e.returnType)
           .toList();
@@ -540,6 +386,9 @@ TypeAlias<int?, String?>? nullableTypeAlias() => null;
         nullableTypeAlias.toCode(recursive: false),
         '#{{package:temp_test/main.dart|TypeAlias}}?',
       );
+
+      expect(prefix1.toCode(), '#{{package:temp_test/obj.dart|Obj}}');
+      expect(prefix2.toCode(), '#{{package:temp_test/obj2.dart|Obj}}');
     });
   });
 }

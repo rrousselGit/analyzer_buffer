@@ -212,9 +212,16 @@ class _TargetNamespace {
 
     if (_fragment case final fragment?) {
       for (final import in fragment.libraryImports2) {
-        if (import.namespace.definedNames2.containsKey(symbol)) {
-          return (prefix: import.prefix2?.name2,);
-        }
+        final elementUri =
+            import.namespace.definedNames2[symbol]?.library2?.uri;
+        if (elementUri == null) continue;
+
+        final actualUri = _CanonicalizedUri.fromImportUri(
+          elementUri,
+          generatedFile: generatedFile,
+        );
+
+        if (uri == actualUri) return (prefix: import.prefix2?.name2,);
       }
     }
 
@@ -441,9 +448,6 @@ class _CanonicalizedUri {
 ///
 /// It is primarily used with [write], as it enables writing code in plain
 /// strings, and interpolating types to still support prefixes and co.
-///
-/// Alternatively, you can write code "as usual" by using the [writeType] method,
-/// combined with passing non-interpolated strings to [write].
 class AnalyzerBuffer {
   AnalyzerBuffer._({
     required _GeneratedFileLocation generatedFile,
@@ -550,6 +554,7 @@ class AnalyzerBuffer {
   /// [recursive] (true by default) controls whether the type arguments of the type should also
   /// be written. If true, will write the type name and its type arguments.
   /// Otherwise, it will only write the type name.
+  @Deprecated('Use DartType.toCode and AnalyzerBuffer.write instead')
   void writeType(
     DartType type, {
     bool recursive = true,
@@ -646,8 +651,8 @@ class AnalyzerBuffer {
   /// [args] can optionally be provided to insert custom 'write' operations
   /// at specific places in the code. It relies by inserting `#{{name}}` in the
   /// code, and then looking up corresponding keys within [args].
-  /// It is commonly used in conjunction with [writeType] or other [write] calls,
-  /// such as to write code conditionally or on a loop:
+  /// It is commonly used in conjunction with other [write] calls
+  /// to write code conditionally or on a loop:
   ///
   /// ```dart
   /// codeBuffer.write(args: {

@@ -1,3 +1,8 @@
+## Unreleased patch
+
+- Fixed a bug when two imports contain classes with the same name.
+- Deprecated `writeType` in favour of `DartType.toCode`+`write`
+
 ## 0.1.11 - 2025-09-09
 
 Updated dependencies to support analyzer v8
