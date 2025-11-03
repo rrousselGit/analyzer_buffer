@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use, missing_whitespace_between_adjacent_strings
+// ignore_for_file: experimental_member_use, deprecated_member_use, missing_whitespace_between_adjacent_strings
 
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
