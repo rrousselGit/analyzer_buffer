@@ -9,7 +9,7 @@ environment:
 resolution: workspace
 
 dependencies:
-  analyzer: ^8.0.0
+  analyzer: ^9.0.0
   collection: ^1.19.1
   meta: ^1.15.0
   path: ^1.9.1

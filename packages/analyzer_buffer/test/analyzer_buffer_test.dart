@@ -13,7 +13,7 @@ part 'foo.g.dart';
 
 int value() => 42;
 ''');
-      final type = result.libraryElement2.typeProvider.intType;
+      final type = result.libraryElement.typeProvider.intType;
 
       var buffer = AnalyzerBuffer.newLibrary(
         header: 'Foo',
@@ -27,7 +27,7 @@ int value() => 42;
       expect(buffer.isEmpty, isFalse);
       expect(buffer.toString(), isNotEmpty);
 
-      buffer = AnalyzerBuffer.part2(result.libraryElement2);
+      buffer = AnalyzerBuffer.part(result.libraryElement);
 
       expect(buffer.isEmpty, isTrue);
       expect(buffer.toString(), '');
@@ -68,21 +68,13 @@ import 'bar.dart' as bar;
 ''');
 
         final buffer = AnalyzerBuffer.part(result.libraryElement);
-        final buffer2 = AnalyzerBuffer.part2(result.libraryElement2);
 
         buffer.write(
-          'Hello #{{temp_test/foo.dart|Name}} and #{{temp_test/bar.dart|Name}} World',
-        );
-        buffer2.write(
           'Hello #{{temp_test/foo.dart|Name}} and #{{temp_test/bar.dart|Name}} World',
         );
 
         expect(
           buffer.toString(),
-          contains('Hello foo.Name and bar.Name World'),
-        );
-        expect(
-          buffer2.toString(),
           contains('Hello foo.Name and bar.Name World'),
         );
       });
@@ -94,17 +86,11 @@ import 'bar.dart' as bar;
           files: {'foo.dart': "export 'dart:async';"},
         );
         final buffer = AnalyzerBuffer.part(result.libraryElement);
-        final buffer2 = AnalyzerBuffer.part2(result.libraryElement2);
 
         buffer.write('Hello #{{dart:async|StreamController}} World');
-        buffer2.write('Hello #{{dart:async|StreamController}} World');
 
         expect(
           buffer.toString(),
-          contains('Hello foo.StreamController World'),
-        );
-        expect(
-          buffer2.toString(),
           contains('Hello foo.StreamController World'),
         );
       });
@@ -223,7 +209,7 @@ import 'bar.dart' as bar;
           "import 'dart:async' as async;\n"
           "part 'foo.g.dart';\n",
         );
-        final buffer = AnalyzerBuffer.part2(result.libraryElement2);
+        final buffer = AnalyzerBuffer.part(result.libraryElement);
 
         buffer.write('Hello #{{dart:async|StreamController}} World');
 
@@ -302,7 +288,7 @@ obj2.Obj prefix2() => obj2.Obj();
         nullableTypeAlias,
         prefix1,
         prefix2,
-      ] = result.libraryElement2.topLevelFunctions
+      ] = result.libraryElement.topLevelFunctions
           .map((e) => e.returnType)
           .toList();
 

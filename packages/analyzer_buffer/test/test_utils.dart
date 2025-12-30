@@ -123,10 +123,11 @@ Matcher matchesIgnoringPrefixes(Object expected) {
 
   return predicate<String>(
     (actual) {
+      var res = actual;
       final prefixRegex = RegExp('_.[0-9]+');
       final allPrefixes = <String, String>{};
 
-      actual = actual.replaceAllMapped(prefixRegex, (match) {
+      res = res.replaceAllMapped(prefixRegex, (match) {
         final prefix = allPrefixes.putIfAbsent(
           match.group(0)!,
           () => '_${allPrefixes.length}',
@@ -135,7 +136,7 @@ Matcher matchesIgnoringPrefixes(Object expected) {
         return prefix;
       });
 
-      return matcher.matches(actual, {});
+      return matcher.matches(res, {});
     },
     'Matches matcher',
   );

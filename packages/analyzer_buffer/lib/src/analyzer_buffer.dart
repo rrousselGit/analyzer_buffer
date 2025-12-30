@@ -2,7 +2,6 @@
 
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
-import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
@@ -25,21 +24,21 @@ extension CodeFor2 on DartType {
       case InvalidType():
         return (Uri.parse('dart:core'), 'InvalidType');
       default:
-        final element = element3;
+        final element = this.element;
         if (element == null) {
           throw ArgumentError('Type $this does not have an element');
         }
 
-        final library = element.library2;
+        final library = element.library;
         if (library == null) {
           throw ArgumentError('Type $this does not have a library');
         }
-        final name3 = element.name3;
-        if (name3 == null) {
+        final name = element.name;
+        if (name == null) {
           throw ArgumentError('Type $this does not have a name');
         }
 
-        return (library.uri, name3);
+        return (library.uri, name);
     }
   }
 
@@ -57,8 +56,8 @@ extension CodeFor2 on DartType {
 
     String result;
     if (that.alias case final alias?) {
-      final uri = alias.element2.library2.uri;
-      final name = alias.element2.name3;
+      final uri = alias.element.library.uri;
+      final name = alias.element.name;
       result = '#{{$uri|$name}}';
 
       if (recursive && alias.typeArguments.isNotEmpty) {
@@ -67,7 +66,7 @@ extension CodeFor2 on DartType {
             .join(', ');
         result += '<$args>';
       }
-    } else if (element3 == null) {
+    } else if (element == null) {
       switch (that) {
         case InvalidType():
           throw InvalidTypeException();
@@ -112,7 +111,7 @@ extension CodeFor2 on DartType {
           for (final (index, param) in requiredPositionals.indexed) {
             if (index > 0) buffer.write(', ');
             buffer.write(param.type.toCode());
-            final name = param.name3;
+            final name = param.name;
             if (name != null && name.isNotEmpty) buffer.write(' $name');
           }
 
@@ -122,7 +121,7 @@ extension CodeFor2 on DartType {
             for (final (index, param) in optionalPositionals.indexed) {
               if (index > 0) buffer.write(', ');
               buffer.write(param.type.toCode());
-              final name = param.name3;
+              final name = param.name;
               if (name != null && name.isNotEmpty) buffer.write(' $name');
             }
             buffer.write(']');
@@ -138,7 +137,7 @@ extension CodeFor2 on DartType {
               if (index > 0) buffer.write(', ');
               if (param.isRequired) buffer.write('required ');
               buffer.write(param.type.toCode());
-              final name = param.name3;
+              final name = param.name;
               if (name != null && name.isNotEmpty) buffer.write(' $name');
             }
             buffer.write('}');
@@ -152,8 +151,8 @@ extension CodeFor2 on DartType {
           throw UnsupportedError('Unknown type $this');
       }
     } else {
-      final (uri, name3) = that._metaFor;
-      final nameCode = '#{{$uri|$name3}}';
+      final (uri, name) = that._metaFor;
+      final nameCode = '#{{$uri|$name}}';
       switch (that) {
         case ParameterizedType()
             when recursive && that.typeArguments.isNotEmpty:
@@ -191,7 +190,7 @@ class _SyntheticImport {
 
 class _TargetNamespace {
   _TargetNamespace(
-    LibraryElement2 library, {
+    LibraryElement library, {
     required this.generatedFile,
   }) : _fragment = library.firstFragment;
 
@@ -211,9 +210,8 @@ class _TargetNamespace {
     if (syntheticImport != null) return (prefix: syntheticImport.prefix,);
 
     if (_fragment case final fragment?) {
-      for (final import in fragment.libraryImports2) {
-        final elementUri =
-            import.namespace.definedNames2[symbol]?.library2?.uri;
+      for (final import in fragment.libraryImports) {
+        final elementUri = import.namespace.definedNames2[symbol]?.library?.uri;
         if (elementUri == null) continue;
 
         final actualUri = _CanonicalizedUri.fromImportUri(
@@ -221,7 +219,7 @@ class _TargetNamespace {
           generatedFile: generatedFile,
         );
 
-        if (uri == actualUri) return (prefix: import.prefix2?.name2,);
+        if (uri == actualUri) return (prefix: import.prefix?.name,);
       }
     }
 
@@ -352,7 +350,7 @@ class _CanonicalizedUri {
   }
 
   factory _CanonicalizedUri.fromLibrary2(
-    LibraryElement2 element, {
+    LibraryElement element, {
     required _GeneratedFileLocation generatedFile,
   }) {
     final uri = element.uri;
@@ -374,10 +372,11 @@ class _CanonicalizedUri {
     Uri uri, {
     required _GeneratedFileLocation generatedFile,
   }) {
+    var uriRes = uri;
     switch (uri) {
       // import 'dir/file.dart' -> 'asset:package_name/path_to_generated/../dir/file.dart'
       case Uri(hasScheme: false):
-        uri = uri.replace(
+        uriRes = uriRes.replace(
           scheme: 'asset',
           path: path.join(path.dirname(generatedFile._path), uri.path),
         );
@@ -387,13 +386,15 @@ class _CanonicalizedUri {
             pathSegments: [final packageName, ...final rest]
           )
           when packageName == generatedFile._packageName:
-        uri = uri.replace(
+        uriRes = uriRes.replace(
           scheme: 'asset',
           path: path.joinAll([packageName, 'lib', ...rest]),
         );
     }
 
-    return _CanonicalizedUri._(uri.replace(path: path.normalize(uri.path)));
+    return _CanonicalizedUri._(
+      uriRes.replace(path: path.normalize(uriRes.path)),
+    );
   }
 
   Uri toImportUri({
@@ -488,21 +489,6 @@ class AnalyzerBuffer {
   /// when writing types.
   factory AnalyzerBuffer.part(
     LibraryElement library, {
-    String? header,
-  }) {
-    return AnalyzerBuffer.part2(
-      library,
-      header: header,
-    );
-  }
-
-  /// Creates a [AnalyzerBuffer] that generates code for a specific [library].
-  ///
-  /// This will not automatically import missing libraries.
-  /// Instead, it will rely on the existing imports to decide which prefix to use
-  /// when writing types.
-  factory AnalyzerBuffer.part2(
-    LibraryElement2 library, {
     String? header,
   }) {
     final generatedFiles = _GeneratedFileLocation._relativeTo(library.uri);
@@ -670,7 +656,7 @@ class AnalyzerBuffer {
   ///
   /// See also:
   /// - [CodeFor2.toCode], to convert obtain the `#{{uri|type}}` representation
-  ///   for a given [Element2].
+  ///   for a given [Element].
   /// - [RevivableToSource.toCode], to convert a [DartObject] into a code representation
   void write(String code, {Map<String, void Function()> args = const {}}) {
     final prevLookup = _lookupArg;
@@ -756,7 +742,7 @@ void _parseCode(
 extension on DartType {
   void _visit({
     required void Function(
-      LibraryElement2? element,
+      LibraryElement? element,
       String name,
       NullabilitySuffix suffix,
       List<DartType> args,
@@ -767,8 +753,8 @@ extension on DartType {
     final alias = this.alias;
     if (alias != null) {
       onType(
-        alias.element2.library2,
-        alias.element2.name3!,
+        alias.element.library,
+        alias.element.name!,
         nullabilitySuffix,
         alias.typeArguments,
       );
@@ -784,7 +770,7 @@ extension on DartType {
     final (_, name) = that._metaFor;
     if (that is ParameterizedType) {
       onType(
-        that.element3?.library2,
+        that.element?.library,
         name,
         nullabilitySuffix,
         that.typeArguments,
@@ -793,7 +779,7 @@ extension on DartType {
     }
 
     onType(
-      that.element3?.library2,
+      that.element?.library,
       name,
       nullabilitySuffix,
       [],

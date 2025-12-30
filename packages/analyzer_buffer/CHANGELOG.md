@@ -1,3 +1,7 @@
+## 0.2.0
+
+Support analyzer 9.0.0
+
 ## 0.1.12 - 2025-11-03
 
 - Fixed a bug when two imports contain classes with the same name.
