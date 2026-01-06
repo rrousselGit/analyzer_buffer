@@ -1,4 +1,4 @@
-## Unreleased minor
+## 0.3.0 - 2026-01-06
 
 - Removed deprecated `writeType`
 - `#{{myPackage|MyClass}}` now matches with classes defined in files such as `package:myPackage/src/file.dart`.
