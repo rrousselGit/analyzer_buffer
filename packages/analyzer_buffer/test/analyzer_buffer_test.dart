@@ -95,6 +95,23 @@ import 'bar.dart' as bar;
         );
       });
 
+      test('code #{{a|name}} can match with package:a/src/file.dart', () async {
+        final result = await resolveFiles(
+          "import 'package:temp_test/src/foo.dart' as ex;",
+          files: {
+            'src/foo.dart': 'class Name {}',
+          },
+        );
+        final buffer = AnalyzerBuffer.part(result.libraryElement);
+
+        buffer.write('Hello #{{temp_test|Name}} World');
+
+        expect(
+          buffer.toString(),
+          contains('Hello ex.Name World'),
+        );
+      });
+
       test('interpolates #{{uri|name}}', () {
         final file = tempDir().file('test', 'main.dart');
         final buffer = AnalyzerBuffer.newLibrary(

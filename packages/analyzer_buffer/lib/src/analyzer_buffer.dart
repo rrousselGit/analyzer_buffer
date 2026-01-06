@@ -182,9 +182,14 @@ final class InvalidTypeException implements Exception {
 }
 
 class _SyntheticImport {
-  _SyntheticImport({required this.uri, required this.prefix});
+  _SyntheticImport({
+    required this.uri,
+    required this.prefix,
+    required this.toImportUri,
+  });
 
-  final _CanonicalizedUri uri;
+  final _ImportUri uri;
+  final Uri toImportUri;
   final String prefix;
 }
 
@@ -202,11 +207,15 @@ class _TargetNamespace {
   final List<_SyntheticImport> syntheticImports = [];
   final _GeneratedFileLocation generatedFile;
 
-  ({String? prefix})? findSymbol(_CanonicalizedUri uri, String symbol) {
-    if (uri == _dartCoreUri || _currentFileUri == uri) return (prefix: null);
+  ({String? prefix})? findSymbol(_CodeUri codeUri, String symbol) {
+    if (codeUri.uri == _dartCoreUri || codeUri.uri == _currentFileUri) {
+      return (prefix: null);
+    }
+
+    final importUri = codeUri.toImportUri(generatedFile: generatedFile);
 
     final syntheticImport =
-        syntheticImports.where((e) => e.uri == uri).firstOrNull;
+        syntheticImports.where((e) => e.toImportUri == importUri).firstOrNull;
     if (syntheticImport != null) return (prefix: syntheticImport.prefix,);
 
     if (_fragment case final fragment?) {
@@ -214,21 +223,24 @@ class _TargetNamespace {
         final elementUri = import.namespace.definedNames2[symbol]?.library?.uri;
         if (elementUri == null) continue;
 
-        final actualUri = _CanonicalizedUri.fromImportUri(
+        final actualUri = _ImportUri.fromImportUri(
           elementUri,
           generatedFile: generatedFile,
         );
 
-        if (uri == actualUri) return (prefix: import.prefix?.name,);
+        if (codeUri.matches(actualUri)) return (prefix: import.prefix?.name,);
       }
     }
 
     return null;
   }
 
-  _CanonicalizedUri get _dartCoreUri =>
-      _CanonicalizedUri._(Uri.parse('dart:core'));
-  _CanonicalizedUri get _currentFileUri => _CanonicalizedUri.fromImportUri(
+  late final _dartCoreUri = _ImportUri.fromImportUri(
+    Uri.parse('dart:core'),
+    generatedFile: generatedFile,
+  );
+
+  _ImportUri get _currentFileUri => _ImportUri.fromImportUri(
         generatedFile: generatedFile,
         Uri(
           scheme: 'asset',
@@ -239,13 +251,19 @@ class _TargetNamespace {
         ),
       );
 
-  ({String? prefix}) import(_CanonicalizedUri uri, String symbol) {
+  ({String? prefix}) import(_CodeUri uri, String symbol) {
     final import = findSymbol(uri, symbol);
     if (import != null) return import;
 
     final prefix = '_i${syntheticImports.length + 1}';
     syntheticImports.add(
-      _SyntheticImport(uri: uri, prefix: prefix),
+      _SyntheticImport(
+        uri: uri.uri,
+        prefix: prefix,
+        toImportUri: uri.toImportUri(
+          generatedFile: generatedFile,
+        ),
+      ),
     );
     return (prefix: prefix,);
   }
@@ -301,74 +319,8 @@ final class _GeneratedFileLocation {
   );
 }
 
-@immutable
-class _CanonicalizedUri {
-  const _CanonicalizedUri._(this.uri);
-
-  factory _CanonicalizedUri.fromCode(
-    Uri input, {
-    required _GeneratedFileLocation generatedFile,
-  }) {
-    var uri = input;
-    if (!uri.hasScheme) uri = uri.replace(scheme: 'package');
-
-    switch (uri) {
-      case Uri(scheme: 'file' || 'dart'):
-        break;
-      case Uri(
-          scheme: 'asset',
-          pathSegments: [final packageName, final firstSegment, ...final rest]
-        ):
-        if (packageName != generatedFile._packageName) {
-          if (firstSegment != 'lib') {
-            throw ArgumentError(
-              'Asset URI $uri does not match the package name ${generatedFile._packageName}',
-            );
-          }
-
-          uri = uri.replace(
-            scheme: 'package',
-            pathSegments: [packageName, ...rest],
-          );
-        }
-
-      case Uri(scheme: 'package', pathSegments: [final segment]):
-        uri = uri.replace(pathSegments: [segment, '$segment.dart']);
-      case Uri(scheme: 'package', pathSegments: [...final rest, final last])
-          when !last.endsWith('.dart'):
-        uri = uri.replace(pathSegments: [...rest, '$last.dart']);
-      case Uri(scheme: 'package'):
-        break;
-      case _:
-        throw UnsupportedError('Unsupported URI: $uri');
-    }
-
-    return _CanonicalizedUri.fromImportUri(
-      uri,
-      generatedFile: generatedFile,
-    );
-  }
-
-  factory _CanonicalizedUri.fromLibrary2(
-    LibraryElement element, {
-    required _GeneratedFileLocation generatedFile,
-  }) {
-    final uri = element.uri;
-    if (uri.scheme != 'package' &&
-        uri.scheme != 'asset' &&
-        uri.scheme != 'dart') {
-      throw ArgumentError(
-        'Expected a package/asset/dart URI, but got: $uri',
-      );
-    }
-
-    return _CanonicalizedUri.fromImportUri(
-      uri,
-      generatedFile: generatedFile,
-    );
-  }
-
-  factory _CanonicalizedUri.fromImportUri(
+extension type _ImportUri._(Uri uri) implements Uri {
+  factory _ImportUri.fromImportUri(
     Uri uri, {
     required _GeneratedFileLocation generatedFile,
   }) {
@@ -392,15 +344,101 @@ class _CanonicalizedUri {
         );
     }
 
-    return _CanonicalizedUri._(
+    return _ImportUri._(
       uriRes.replace(path: path.normalize(uriRes.path)),
+    );
+  }
+}
+
+@immutable
+class _CodeUri {
+  const _CodeUri._(
+    this.uri, {
+    required Uri rawUri,
+    required String? packageName,
+    required String? packagePath,
+  })  : _rawUri = rawUri,
+        _packageName = packageName,
+        _packagePath = packagePath;
+
+  factory _CodeUri.fromCode(
+    Uri input, {
+    required _GeneratedFileLocation generatedFile,
+  }) {
+    var uri = input;
+    if (!uri.hasScheme) uri = uri.replace(scheme: 'package');
+
+    final String? packageName;
+    final String? packagePath;
+
+    switch (uri) {
+      case Uri(scheme: 'file'):
+        packagePath = null;
+        packageName = null;
+
+      case Uri(
+          scheme: 'dart',
+          pathSegments: [final libraryName, ...final filePath]
+        ):
+        packageName = path.join('dart', libraryName);
+        packagePath = path.joinAll(filePath);
+
+      case Uri(
+          scheme: 'asset',
+          pathSegments: [final package, final firstSegment, ...final rest]
+        ):
+        packageName = package;
+
+        if (package != generatedFile._packageName) {
+          if (firstSegment != 'lib') {
+            throw ArgumentError(
+              'Asset URI $uri does not match the package name ${generatedFile._packageName}',
+            );
+          }
+
+          uri = uri.replace(
+            scheme: 'package',
+            pathSegments: [package, ...rest],
+          );
+          packagePath = path.joinAll(rest);
+          break;
+        }
+
+        packagePath = path.joinAll([firstSegment, ...rest]);
+      case Uri(scheme: 'package', pathSegments: [final segment]):
+        uri = uri.replace(pathSegments: [segment, '$segment.dart']);
+        packageName = segment;
+        packagePath = null;
+
+      case Uri(
+            scheme: 'package',
+            pathSegments: [final package, ...final rest, final last]
+          )
+          when !last.endsWith('.dart'):
+        uri = uri.replace(pathSegments: [package, ...rest, '$last.dart']);
+        packageName = package;
+        packagePath = path.joinAll([...rest, '$last.dart']);
+
+      case Uri(scheme: 'package', pathSegments: [final package, ...final rest]):
+        packageName = package;
+        packagePath = path.joinAll(rest);
+
+      case _:
+        throw UnsupportedError('Unsupported URI: $uri');
+    }
+
+    return _CodeUri._(
+      _ImportUri.fromImportUri(uri, generatedFile: generatedFile),
+      packageName: packageName,
+      packagePath: packagePath,
+      rawUri: input,
     );
   }
 
   Uri toImportUri({
     required _GeneratedFileLocation generatedFile,
   }) {
-    switch (uri) {
+    switch (uri.uri) {
       // asset:package_name/lib/dir/file.dart -> ./dir/file.dart
       case Uri(
           scheme: 'asset',
@@ -408,7 +446,7 @@ class _CanonicalizedUri {
         ):
         if (packageName != generatedFile._packageName) {
           throw ArgumentError(
-            'Asset URI $uri does not match the package name ${generatedFile._packageName}',
+            'Asset URI ${uri.uri} does not match the package name ${generatedFile._packageName}',
           );
         }
         return Uri.parse(
@@ -420,24 +458,46 @@ class _CanonicalizedUri {
           ),
         );
       case _:
-        return uri;
+        return uri.uri;
     }
   }
 
-  final Uri uri;
+  final _ImportUri uri;
+  final Uri _rawUri;
+  final String? _packageName;
+  final String? _packagePath;
 
-  @override
-  bool operator ==(Object other) {
-    if (other is! _CanonicalizedUri) return false;
-    return uri == other.uri;
+  /// Whether `package:riverpod/riverpod.dart` can match to a class defined in a `package:riverpod/src/file.dart`
+  ///
+  /// This is determined based off if the code has a full path definition or not.
+  /// Cf `{{riverpod|ClassName}}` vs `{{package:riverpod/src/file.dart|ClassName}}`
+  bool get _isStrictMatch => _packageName == null || _packagePath != null;
+
+  bool matches(_ImportUri importUri) {
+    if (_isStrictMatch) return uri == importUri;
+
+    return _packageName == importUri.packageName;
   }
 
   @override
-  int get hashCode => uri.hashCode;
-
-  @override
   String toString() {
-    return '$_CanonicalizedUri($uri)';
+    return '$_CodeUri($_rawUri interpreted as $uri)';
+  }
+}
+
+extension on Uri {
+  String? get packageName {
+    switch (this) {
+      case Uri(scheme: 'dart'):
+        return path.join('dart', this.path);
+      case Uri(
+          scheme: 'package' || 'asset',
+          pathSegments: [final packageName, ...]
+        ):
+        return packageName;
+      case _:
+        return null;
+    }
   }
 }
 
@@ -521,7 +581,7 @@ class AnalyzerBuffer {
 
   void Function()? Function(String name)? _lookupArg;
 
-  ({String? prefix}) _upsertImport(_CanonicalizedUri uri, String symbol) {
+  ({String? prefix}) _upsertImport(_CodeUri uri, String symbol) {
     final find = _namespace.findSymbol(uri, symbol);
     if (find != null) return find;
 
@@ -529,76 +589,6 @@ class AnalyzerBuffer {
 
     throw ArgumentError(
       'Cannot find import for $symbol in $uri, and could not automatically import it.',
-    );
-  }
-
-  /// Writes the given [type] to the buffer.
-  ///
-  /// If the buffer was created with [AnalyzerBuffer.newLibrary], it will automatically
-  /// import the necessary libraries to write the type.
-  ///
-  /// [recursive] (true by default) controls whether the type arguments of the type should also
-  /// be written. If true, will write the type name and its type arguments.
-  /// Otherwise, it will only write the type name.
-  @Deprecated('Use DartType.toCode and AnalyzerBuffer.write instead')
-  void writeType(
-    DartType type, {
-    bool recursive = true,
-  }) {
-    type._visit(
-      generatedFile: _generatedFile,
-      onType: (library, name, suffix, args) {
-        String? prefix;
-        if (library != null) {
-          prefix = _upsertImport(
-            _CanonicalizedUri.fromLibrary2(
-              library,
-              generatedFile: _generatedFile,
-            ),
-            name,
-          ).prefix;
-        }
-
-        if (prefix != null) {
-          _buffer.write(prefix);
-          _buffer.write('.');
-        }
-        _buffer.write(name);
-
-        if (recursive && args.isNotEmpty) {
-          _buffer.write('<');
-          for (final (index, arg) in args.indexed) {
-            if (index != 0) _buffer.write(', ');
-            writeType(arg);
-          }
-          _buffer.write('>');
-        }
-
-        switch (suffix) {
-          case NullabilitySuffix.question:
-            _buffer.write('?');
-          case NullabilitySuffix.none:
-          case NullabilitySuffix.star:
-        }
-      },
-      onRecord: (type) {
-        _buffer.write('(');
-        for (final field in type.positionalFields) {
-          writeType(field.type);
-          _buffer.write(',');
-        }
-
-        if (type.namedFields.isNotEmpty) {
-          _buffer.write(' {');
-          for (final field in type.namedFields) {
-            writeType(field.type);
-            _buffer.write(',');
-          }
-          _buffer.write('}');
-        }
-
-        _buffer.write(')');
-      },
     );
   }
 
@@ -709,7 +699,7 @@ class AnalyzerBuffer {
       if (header != null) header,
       ..._namespace.syntheticImports.map((e) {
         final prefix = e.prefix;
-        final targetUri = e.uri.toImportUri(generatedFile: _generatedFile);
+        final targetUri = e.toImportUri;
 
         return "import '$targetUri' as $prefix;";
       }),
@@ -721,14 +711,14 @@ class AnalyzerBuffer {
 void _parseCode(
   String code, {
   required void Function(String arg) onArg,
-  required void Function(_CanonicalizedUri uri, String type) onUri,
+  required void Function(_CodeUri uri, String type) onUri,
   required _GeneratedFileLocation generatedFile,
 }) {
   switch (code.split('|')) {
     case [final argName]:
       onArg(argName);
     case [final uriStr, final type]:
-      final uri = _CanonicalizedUri.fromCode(
+      final uri = _CodeUri.fromCode(
         Uri.parse(uriStr),
         generatedFile: generatedFile,
       );
@@ -736,53 +726,5 @@ void _parseCode(
       onUri(uri, type);
     case _:
       throw ArgumentError('Invalid argument: $code');
-  }
-}
-
-extension on DartType {
-  void _visit({
-    required void Function(
-      LibraryElement? element,
-      String name,
-      NullabilitySuffix suffix,
-      List<DartType> args,
-    ) onType,
-    required void Function(RecordType type) onRecord,
-    required _GeneratedFileLocation generatedFile,
-  }) {
-    final alias = this.alias;
-    if (alias != null) {
-      onType(
-        alias.element.library,
-        alias.element.name!,
-        nullabilitySuffix,
-        alias.typeArguments,
-      );
-      return;
-    }
-
-    final that = this;
-    if (that is RecordType) {
-      onRecord(that);
-      return;
-    }
-
-    final (_, name) = that._metaFor;
-    if (that is ParameterizedType) {
-      onType(
-        that.element?.library,
-        name,
-        nullabilitySuffix,
-        that.typeArguments,
-      );
-      return;
-    }
-
-    onType(
-      that.element?.library,
-      name,
-      nullabilitySuffix,
-      [],
-    );
   }
 }

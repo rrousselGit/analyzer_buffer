@@ -57,14 +57,14 @@ class E2ELibrary extends Generator {
       header: '// ignore_for_file: type=lint, type=warning',
     );
 
-    // final elements = library.annotatedWith(
-    //   const TypeChecker.fromRuntime(E2E),
-    // );
+    final elements = library.annotatedWith(
+      const TypeChecker.typeNamed(E2E),
+    );
 
-    // for (final annotation in elements) {
-    //   final element = annotation.element;
-    //   _handle(element, buffer);
-    // }
+    for (final annotation in elements) {
+      final element = annotation.element;
+      _handle(element, buffer);
+    }
 
     return buffer.toString();
   }
@@ -73,7 +73,7 @@ class E2ELibrary extends Generator {
 void _handle(Element element, AnalyzerBuffer buffer) {
   switch (element) {
     case TopLevelFunctionElement():
-      buffer.writeType(element.returnType);
+      buffer.write(element.returnType.toCode());
       buffer.write(' ${element.name}E2e([');
       for (final parameter in element.formalParameters) {
         buffer.write(

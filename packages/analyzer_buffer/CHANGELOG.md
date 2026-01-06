@@ -1,3 +1,9 @@
+## Unreleased minor
+
+- Removed deprecated `writeType`
+- `#{{myPackage|MyClass}}` now matches with classes defined in files such as `package:myPackage/src/file.dart`.
+  If you don't want this, explicitly define the expected path in the code, such as `#{{myPackage/src/another|MyClass}}`
+
 ## 0.2.0
 
 Support analyzer 9.0.0
@@ -11,7 +17,7 @@ Support analyzer 9.0.0
 
 Updated dependencies to support analyzer v8
 This allows for compatibility with upgraded generators using analyzer v8 and source_gen v4
-  (thanks to @TekExplorer)
+(thanks to @TekExplorer)
 
 - `analyzer: '>=7.3.0 <9.0.0'`
 - `source_gen: '>=3.0.0 <5.0.0'`
