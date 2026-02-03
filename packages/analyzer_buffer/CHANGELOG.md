@@ -1,3 +1,7 @@
+## Unreleased patch
+
+Support analyzer 10.0.0
+
 ## 0.3.0 - 2026-01-06
 
 - Removed deprecated `writeType`
