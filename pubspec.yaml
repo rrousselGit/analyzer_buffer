@@ -1,5 +1,5 @@
 name: workspace
-public_to: none
+publish_to: none
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
