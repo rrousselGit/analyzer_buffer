@@ -8,8 +8,8 @@ environment:
 resolution: workspace
 
 dependencies:
-  analyzer: '>=9.0.0 <11.0.0'
-  analyzer_buffer: 0.3.1
+  analyzer: ">=10.0.0 <13.0.0"
+  analyzer_buffer: 0.3.2
   build: ^4.0.0
   build_config: ^1.1.0
   collection: ^1.15.0
