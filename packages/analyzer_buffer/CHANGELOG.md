@@ -1,3 +1,7 @@
+## Unreleased patch
+
+Support analyzer 13.0.0
+
 ## 0.3.2 - 2026-04-23
 
 Support analyzer 12.0.0
@@ -106,4 +110,3 @@ feat: added `buffer.isEmpty`
 ## 0.0.1
 
 Initial release
-
