@@ -1,3 +1,7 @@
+## Unreleased patch
+
+Support analyzer 14.0.0
+
 ## 0.3.3 - 2026-06-11
 
 Support analyzer 13.0.0
